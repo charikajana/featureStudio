@@ -1,0 +1,59 @@
+services:
+  # Feature Studio Services
+  db:
+    image: postgres:15-alpine
+    container_name: bdd-editor-db
+    environment:
+      POSTGRES_DB: bdd_editor
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - feature-studio-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bdd-editor-backend
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/bdd_editor
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      APP_WORKSPACE_ROOT: /data/workspaces
+    ports:
+      - "8080:8080"
+    volumes:
+      - workspaces_data:/data/workspaces
+    networks:
+      - feature-studio-network
+
+  frontend:
+    image: node:20-alpine
+    container_name: bdd-editor-frontend
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_BACKEND_URL=http://backend:8080
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - backend
+    networks:
+      - feature-studio-network
+
+volumes:
+  postgres_data:
+  workspaces_data:
+
+networks:
+  feature-studio-network:
+    driver: bridge
