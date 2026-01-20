@@ -129,7 +129,7 @@ function App() {
             </>
           ) : activeView === 'stats' ? (
             <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
-              <TestStatsView repoUrl={repoUrl} />
+              <TestStatsView repoUrl={repoUrl} branch={currentBranch} />
             </Box>
           ) : activeView === 'pipeline' ? (
             <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>

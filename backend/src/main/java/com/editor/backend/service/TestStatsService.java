@@ -30,9 +30,9 @@ public class TestStatsService {
      * @param repoPath Path to the Git repository
      * @return TestStats containing counts of features, scenarios, steps, etc.
      */
-    @Cacheable(value = "testStats", key = "#repoPath")
-    public TestStats calculateStats(String repoPath) {
-        log.info("Computing test stats for repository at path: {}", repoPath);
+    @Cacheable(value = "testStats", key = "{#repoPath, #branch}")
+    public TestStats calculateStats(String repoPath, String branch) {
+        log.info("Computing test stats for repository at path: {} on branch: {}", repoPath, branch);
         long startTime = System.currentTimeMillis();
         TestStats stats = new TestStats();
         
@@ -45,17 +45,11 @@ public class TestStatsService {
         try (Git git = Git.open(repoDir)) {
             Repository repository = git.getRepository();
             
-            // 1. Identify "source of truth" branch
-            String branchName = "main";
-            if (repository.findRef("refs/heads/main") != null || repository.findRef("refs/remotes/origin/main") != null) {
-                branchName = "main";
-            } else if (repository.findRef("refs/heads/master") != null || repository.findRef("refs/remotes/origin/master") != null) {
-                branchName = "master";
-            } else if (repository.findRef("refs/heads/develop") != null || repository.findRef("refs/remotes/origin/develop") != null) {
-                branchName = "develop";
-            } else {
+            // 1. Identify branch: prioritize provided branch, then current checked out, then fallbacks
+            String branchName = branch;
+            if (branchName == null || branchName.isEmpty()) {
                 branchName = repository.getBranch();
-                log.info("No common base branch found, using current branch: {}", branchName);
+                log.info("No branch specified, using current checked out branch: {}", branchName);
             }
             
             log.info("Baseline branch for stats: {}", branchName);

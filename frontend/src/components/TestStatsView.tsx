@@ -15,20 +15,23 @@ import FlashOnIcon from '@mui/icons-material/FlashOn';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import FootprintsIcon from '@mui/icons-material/DirectionsWalk';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import { featureService } from '../services/api';
 
 interface TestStatsViewProps {
     repoUrl: string;
+    branch?: string;
 }
 
-export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl }) => {
+export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch }) => {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
+            setLoading(true);
             try {
-                const { data } = await featureService.getTestStats(repoUrl);
+                const { data } = await featureService.getTestStats(repoUrl, branch);
                 setStats(data);
             } catch (error) {
                 console.error('Error fetching test stats:', error);
@@ -40,7 +43,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl }) => {
         if (repoUrl) {
             fetchStats();
         }
-    }, [repoUrl]);
+    }, [repoUrl, branch]);
 
     if (loading) {
         return (
@@ -62,9 +65,39 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl }) => {
 
     return (
         <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
-            <Typography variant="h4" sx={{ mb: 4, fontWeight: 800, color: '#111827', letterSpacing: '-1px' }}>
-                Test Dashboard
-            </Typography>
+            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#111827', letterSpacing: '-1px', mb: 0.5 }}>
+                        Test Dashboard
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <ListAltIcon sx={{ fontSize: 16 }} />
+                        Real-time BDD metrics from your repository
+                    </Typography>
+                </Box>
+
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    px: 2,
+                    py: 1,
+                    bgcolor: 'white',
+                    borderRadius: 3,
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                }}>
+                    <AccountTreeIcon sx={{ color: '#6366f1', fontSize: 20 }} />
+                    <Box>
+                        <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, display: 'block', lineHeight: 1, mb: 0.5, letterSpacing: '0.5px' }}>
+                            ACTIVE BRANCH
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 700, lineHeight: 1 }}>
+                            {branch || 'main'}
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
 
             <Grid container spacing={3}>
                 {statCards.map((card, idx) => (
@@ -109,8 +142,8 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl }) => {
             <Paper sx={{ mt: 4, p: 4, borderRadius: 4, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Summary & Insights</Typography>
                 <Typography variant="body1" color="text.secondary">
-                    Your repository currently contains <strong>{stats.totalTests} individual test executions</strong> spread across <strong>{stats.totalFeatures} feature files</strong>.
-                    The high count of steps (<strong>{stats.totalSteps}</strong>) relative to scenarios suggests a descriptive BDD implementation.
+                    Your repository on branch <strong>{branch || 'default'}</strong> currently contains <strong>{stats.totalTests} individual test executions</strong> spread across <strong>{stats.totalFeatures} feature files</strong>.
+                    The high count of steps (<strong>{stats.totalSteps}</strong>) relative to scenarios suggests a descriptive BDD implementation on this branch.
                 </Typography>
             </Paper>
         </Box>

@@ -1,6 +1,7 @@
 import * as monaco from 'monaco-editor';
 
 export const registerGherkinLanguage = (monacoInstance: typeof monaco) => {
+    // Register the language
     monacoInstance.languages.register({
         id: 'gherkin',
         extensions: ['.feature', '.gherkin'],
@@ -8,32 +9,63 @@ export const registerGherkinLanguage = (monacoInstance: typeof monaco) => {
         mimetypes: ['text/x-gherkin-feature']
     });
 
+    // Language configuration
+    monacoInstance.languages.setLanguageConfiguration('gherkin', {
+        comments: {
+            lineComment: '#'
+        },
+        brackets: [
+            ['{', '}'],
+            ['[', ']'],
+            ['(', ')']
+        ],
+        autoClosingPairs: [
+            { open: '{', close: '}' },
+            { open: '[', close: ']' },
+            { open: '(', close: ')' },
+            { open: '"', close: '"' },
+            { open: '<', close: '>' }
+        ],
+        surroundingPairs: [
+            { open: '{', close: '}' },
+            { open: '[', close: ']' },
+            { open: '(', close: ')' },
+            { open: '"', close: '"' },
+            { open: '<', close: '>' }
+        ]
+    });
+
+    // Tokenizer
+    // Tokenizer
     monacoInstance.languages.setMonarchTokensProvider('gherkin', {
         defaultToken: '',
         tokenPostfix: '.gherkin',
-        keywords: [
-            'Feature', 'Background', 'Scenario', 'Scenario Outline', 'Examples',
-            'Given', 'When', 'Then', 'And', 'But'
-        ],
+
         tokenizer: {
             root: [
-                // Comments must come first
-                [/#.*$/, 'comment'],
+                // Comments
+                [/^\s*#.*$/, 'comment'],
 
-                // Tags
-                [/@[a-zA-Z_]\w*/, 'tag'],
+                // Tags (including colons and dashes)
+                [/@[a-zA-Z0-9_\-:]+/, 'tag'],
 
-                // Keywords - Feature, Scenario, Background, etc
-                [/^\s*(Feature|Scenario Outline|Scenario|Background|Examples)(:)/,
-                    ['keyword', 'delimiter']],
+                // Feature keyword
+                [/^\s*(Feature)(:)/, ['keyword.feature', 'delimiter']],
 
-                // Step keywords - Given, When, Then, And, But
-                [/^\s*(Given|When|Then|And|But)(\s)/,
-                    ['keyword.step', 'white']],
+                // Background, Scenario, Examples keywords
+                [/^\s*(Scenario Outline|Scenario|Background|Examples)(:)/, ['keyword.scenario', 'delimiter']],
 
-                // Strings in double quotes
-                [/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-terminated string
-                [/"/, 'string', '@string_double'],
+                // Step keywords
+                [/^\s*(Given|When|Then|And|But)\b/, 'keyword.step'],
+
+                // Docstrings
+                [/"""/, { token: 'string.quote', bracket: '@open', next: '@docstring' }],
+
+                // Strings (Double quotes)
+                [/"/, { token: 'string.quote', bracket: '@open', next: '@string_double' }],
+
+                // Strings (Single quotes)
+                [/'/, { token: 'string.quote', bracket: '@open', next: '@string_single' }],
 
                 // Parameters/Variables in angle brackets
                 [/<[^>]+>/, 'variable'],
@@ -45,44 +77,56 @@ export const registerGherkinLanguage = (monacoInstance: typeof monaco) => {
                 [/\d+/, 'number'],
             ],
 
+            docstring: [
+                [/[^"]+/, 'string'],
+                [/"""/, { token: 'string.quote', bracket: '@close', next: '@pop' }],
+                [/"/, 'string']
+            ],
+
             string_double: [
                 [/[^\\"]+/, 'string'],
                 [/\\./, 'string.escape'],
-                [/"/, 'string', '@pop']
+                [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
             ],
+
+            string_single: [
+                [/[^\\']+/, 'string'],
+                [/\\./, 'string.escape'],
+                [/'/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+            ]
         }
     });
 
+    // Theme Definition
     monacoInstance.editor.defineTheme('gherkin-vibrant', {
         base: 'vs',
         inherit: true,
         rules: [
-            // Keywords (Feature, Scenario, Background, Examples)
-            { token: 'keyword', foreground: '7c3aed', fontStyle: 'bold' },
+            // Structural Keywords
+            { token: 'keyword.feature', foreground: '7c3aed', fontStyle: 'bold' },
+            { token: 'keyword.scenario', foreground: '4f46e5', fontStyle: 'bold' },
 
-            // Step keywords (Given, When, Then, And, But)
+            // Step Keywords
             { token: 'keyword.step', foreground: '2563eb', fontStyle: 'bold' },
 
-            // Tags (@tag)
-            { token: 'tag', foreground: '06b6d4', fontStyle: 'italic bold' },
+            // Tags - Teal/Cyan
+            { token: 'tag', foreground: '0ea5e9', fontStyle: 'bold italic' },
 
-            // Strings
-            { token: 'string', foreground: '059669' },
-            { token: 'string.escape', foreground: 'ea580c' },
-            { token: 'string.invalid', foreground: 'dc2626', fontStyle: 'underline' },
-
-            // Parameters/Variables (<param>)
-            { token: 'variable', foreground: 'd97706', fontStyle: 'bold' },
+            // Strings and Docstrings (Test Data) - Fuchsia
+            { token: 'string', foreground: 'd946ef', fontStyle: 'bold' },
+            { token: 'string.quote', foreground: 'd946ef', fontStyle: 'bold' },
+            { token: 'string.escape', foreground: 'be185d' },
 
             // Comments
             { token: 'comment', foreground: '94a3b8', fontStyle: 'italic' },
 
-            // Table delimiters
-            { token: 'delimiter.table', foreground: '8b5cf6', fontStyle: 'bold' },
-            { token: 'delimiter', foreground: '64748b' },
+            // Variables and Tables
+            { token: 'variable', foreground: 'f59e0b', fontStyle: 'bold' },
+            { token: 'delimiter.table', foreground: 'a78bfa', fontStyle: 'bold' },
+            { token: 'delimiter', foreground: '94a3b8' },
 
             // Numbers
-            { token: 'number', foreground: 'c026d3' },
+            { token: 'number', foreground: 'd946ef' }
         ],
         colors: {
             'editor.background': '#ffffff',
@@ -91,9 +135,7 @@ export const registerGherkinLanguage = (monacoInstance: typeof monaco) => {
             'editorLineNumber.activeForeground': '#6366f1',
             'editorIndentGuide.background': '#f1f5f9',
             'editorIndentGuide.activeBackground': '#cbd5e1',
-            'editorGroupHeader.tabsBackground': '#f8fafc',
             'editor.selectionBackground': '#ddd6fe',
-            'editor.selectionHighlightBackground': '#e0e7ff',
             'editorCursor.foreground': '#6366f1',
         }
     });

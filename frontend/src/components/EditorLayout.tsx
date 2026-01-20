@@ -1,3 +1,4 @@
+import React, { useCallback } from 'react';
 import type { FC } from 'react';
 import { Box, Typography } from '@mui/material';
 import { FileTree } from './FileTree';
@@ -24,6 +25,10 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
     setTargetFolder, setModalOpen, activeRepoName,
     currentFile, content, setContent, currentBranch
 }) => {
+    const handleEditorDidMount = useCallback((editor: any) => {
+        editor.layout();
+    }, []);
+
     return (
         <>
             <Box
@@ -94,7 +99,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
                     content={content}
                     onContentChange={setContent}
                     onEditorWillMount={registerGherkinLanguage}
-                    onEditorDidMount={(editor) => { editor.layout(); }}
+                    onEditorDidMount={handleEditorDidMount}
                 />
 
                 {/* Editor Status Bar */}

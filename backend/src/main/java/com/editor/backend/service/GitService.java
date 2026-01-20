@@ -224,31 +224,28 @@ public class GitService {
 
     public List<String> getAllBranches(String localPath, String pat) throws IOException, GitAPIException {
         try (Git git = Git.open(new File(localPath))) {
-            // First, fetch from remote to see new branches
-            if (pat != null && !pat.isEmpty()) {
-                try {
-                    String url = git.getRepository().getConfig().getString("remote", "origin", "url");
-                    String username = (url != null && url.contains("dev.azure.com")) ? "" : "token";
-                    git.fetch()
-                            .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, pat))
-                            .call();
-                } catch (Exception e) {
-                    log.warn("Could not fetch from remote: {}", e.getMessage());
-                }
-            }
-
             return git.branchList().setListMode(org.eclipse.jgit.api.ListBranchCommand.ListMode.ALL).call().stream()
                     .map(ref -> {
                         String name = ref.getName();
                         if (name.startsWith("refs/heads/")) {
-                            return name.replace("refs/heads/", "");
-                        } else if (name.startsWith("refs/remotes/origin/")) {
-                            return name.replace("refs/remotes/origin/", "");
+                            return name.substring("refs/heads/".length());
+                        } else if (name.startsWith("refs/remotes/")) {
+                            // Strip 'refs/remotes/' and then strip the first part (remote name) if it exists
+                            String remoteName = name.substring("refs/remotes/".length());
+                            int slashIndex = remoteName.indexOf('/');
+                            if (slashIndex != -1) {
+                                String branchName = remoteName.substring(slashIndex + 1);
+                                if (!branchName.equals("HEAD")) {
+                                    return branchName;
+                                }
+                            }
+                            return remoteName;
                         }
                         return name;
                     })
-                    .filter(name -> !name.equals("HEAD"))
+                    .filter(name -> !name.equals("HEAD") && !name.contains("HEAD"))
                     .distinct()
+                    .sorted()
                     .collect(java.util.stream.Collectors.toList());
         }
     }

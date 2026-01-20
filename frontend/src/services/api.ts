@@ -17,9 +17,9 @@ export const featureService = {
             headers: getAuthHeaders()
         }),
 
-    getTestStats: (repoUrl: string) =>
+    getTestStats: (repoUrl: string, branch?: string) =>
         api.get<any>('/features/stats', {
-            params: { repoUrl },
+            params: { repoUrl, branch },
             headers: getAuthHeaders()
         }),
 

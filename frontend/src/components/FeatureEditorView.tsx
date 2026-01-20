@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import type { FC } from 'react';
 import { Box, Typography, CircularProgress, Button, Tooltip } from '@mui/material';
 import Editor from '@monaco-editor/react';
@@ -22,10 +22,23 @@ export const FeatureEditorView: FC<FeatureEditorViewProps> = ({
 }) => {
     const editorRef = useRef<any>(null);
 
+    // Use a ref to track if the change is internal (typing) or external (props)
+    const isInternalChange = useRef(false);
+
     const handleEditorDidMount = (editor: any) => {
         editorRef.current = editor;
         onEditorDidMount(editor);
     };
+
+    // Update editor content only when it changes from the outside (e.g., file load, reset)
+    React.useEffect(() => {
+        if (editorRef.current && content !== editorRef.current.getValue()) {
+            if (!isInternalChange.current) {
+                editorRef.current.setValue(content);
+            }
+        }
+        isInternalChange.current = false;
+    }, [content]);
 
     const handleFormat = () => {
         if (editorRef.current) {
@@ -33,7 +46,46 @@ export const FeatureEditorView: FC<FeatureEditorViewProps> = ({
         }
     };
 
+    const handleContentChange = (value: string | undefined) => {
+        const newVal = value || '';
+        isInternalChange.current = true;
+        onContentChange(newVal);
+    };
+
+    const editorOptions = useMemo(() => ({
+        fontSize: 16,
+        fontFamily: "'Cascadia Code', 'Fira Code', 'Courier New', monospace",
+        minimap: { enabled: false },
+        lineNumbers: 'on' as const,
+        roundedSelection: true,
+        scrollBeyondLastLine: false,
+        readOnly: false,
+        automaticLayout: true,
+        cursorSmoothCaretAnimation: 'on' as const,
+        lineHeight: 28,
+        padding: { top: 16, bottom: 16 },
+        glyphMargin: false,
+        folding: true,
+        formatOnPaste: false, // Disabled to prevent cursor jumping
+        formatOnType: false,  // Disabled to prevent cursor jumping
+        smoothScrolling: true,
+        bracketPairColorization: {
+            enabled: true
+        },
+        renderLineHighlight: 'all' as const,
+        overviewRulerBorder: false,
+        hideCursorInOverviewRuler: true,
+        scrollbar: {
+            vertical: 'visible' as const,
+            horizontal: 'visible' as const,
+            useShadows: false,
+            verticalScrollbarSize: 10,
+            horizontalScrollbarSize: 10
+        }
+    }), []);
+
     if (!currentFile) {
+        // ... (rest of the empty state remains same)
         return (
             <Box sx={{
                 display: 'flex',
@@ -140,30 +192,14 @@ export const FeatureEditorView: FC<FeatureEditorViewProps> = ({
                     key={currentFile}
                     height="100%"
                     width="100%"
-                    defaultLanguage="gherkin"
+                    language="gherkin"
                     theme="gherkin-vibrant"
                     beforeMount={onEditorWillMount}
                     onMount={handleEditorDidMount}
-                    value={content}
-                    onChange={(v) => onContentChange(v || '')}
+                    defaultValue={content}
+                    onChange={handleContentChange}
                     loading={<CircularProgress sx={{ m: 'auto' }} />}
-                    options={{
-                        fontSize: 16,
-                        fontFamily: "'Cascadia Code', 'Fira Code', 'Courier New', monospace",
-                        minimap: { enabled: false },
-                        lineNumbers: 'on',
-                        roundedSelection: true,
-                        scrollBeyondLastLine: false,
-                        readOnly: false,
-                        automaticLayout: true,
-                        cursorSmoothCaretAnimation: 'on',
-                        lineHeight: 28,
-                        padding: { top: 16, bottom: 16 },
-                        glyphMargin: false,
-                        folding: true,
-                        formatOnPaste: true,
-                        formatOnType: true
-                    }}
+                    options={editorOptions}
                 />
             </Box>
         </Box>

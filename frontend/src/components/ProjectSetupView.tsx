@@ -108,19 +108,34 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
         }
     };
 
+    const [fetchingBranches, setFetchingBranches] = useState(false);
+
     const handleOpenBranchDialog = async (repoUrl: string) => {
         setSelectedRepoForBranch(repoUrl);
         setBranchDialogOpen(true);
         setNewBranchName('');
+        setAvailableBranches([]);
+        setFetchingBranches(true);
 
         try {
             const res = await featureService.getAllBranches(repoUrl);
             setAvailableBranches(res.data);
-            const currentRes = await featureService.getCurrentBranch(repoUrl);
-            setBaseBranch(currentRes.data || res.data[0] || 'main');
+
+            let currentBranchRes = '';
+            try {
+                const currentRes = await featureService.getCurrentBranch(repoUrl);
+                currentBranchRes = currentRes.data;
+            } catch (e) {
+                console.warn('Failed to fetch current branch, using fallback');
+            }
+
+            // Set base branch: either current, or first available, or 'main'
+            setBaseBranch(currentBranchRes || res.data[0] || 'main');
         } catch (e) {
-            setError('Failed to fetch branches');
+            setError('Failed to fetch branches. Check your connection and PAT.');
             setBranchDialogOpen(false);
+        } finally {
+            setFetchingBranches(false);
         }
     };
 
@@ -128,11 +143,16 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
         if (!newBranchName.trim()) return;
         setCreatingBranch(true);
         try {
-            await featureService.createBranch(selectedRepoForBranch, newBranchName.trim(), baseBranch);
-            setSuccess(`Branch '${newBranchName}' created successfully!`);
+            const branchName = newBranchName.trim();
+            await featureService.createBranch(selectedRepoForBranch, branchName, baseBranch);
+            setSuccess(`Branch '${branchName}' created successfully!`);
             setBranchDialogOpen(false);
-            // Optionally switch to this repo and branch
-            onSwitchRepo(selectedRepoForBranch);
+
+            // Fetch current branches again to update the UI
+            fetchCurrentBranches(repos);
+
+            // Optionally switch to this repo and branch if needed or just notify
+            // onSwitchRepo(selectedRepoForBranch);
         } catch (e: any) {
             setError(e.response?.data || 'Failed to create branch');
         } finally {
@@ -403,16 +423,33 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                             Creating branch for: <strong>{selectedRepoForBranch.split('/').pop()}</strong>
                         </Typography>
 
-                        <FormControl fullWidth>
-                            <InputLabel>Base Branch</InputLabel>
+                        <FormControl fullWidth disabled={fetchingBranches}>
+                            <InputLabel id="base-branch-label">Base Branch</InputLabel>
                             <Select
+                                labelId="base-branch-label"
                                 value={baseBranch}
                                 onChange={(e) => setBaseBranch(e.target.value)}
                                 label="Base Branch"
+                                autoWidth={false}
+                                startAdornment={fetchingBranches ? (
+                                    <InputAdornment position="start">
+                                        <CircularProgress size={16} color="inherit" />
+                                    </InputAdornment>
+                                ) : null}
                             >
-                                {availableBranches.map(b => (
-                                    <MenuItem key={b} value={b}>{b}</MenuItem>
-                                ))}
+                                {fetchingBranches ? (
+                                    <MenuItem disabled value="">
+                                        <em>Loading branches...</em>
+                                    </MenuItem>
+                                ) : availableBranches.length > 0 ? (
+                                    availableBranches.map(b => (
+                                        <MenuItem key={b} value={b}>{b}</MenuItem>
+                                    ))
+                                ) : (
+                                    <MenuItem disabled value="">
+                                        <em>No branches found</em>
+                                    </MenuItem>
+                                )}
                             </Select>
                         </FormControl>
 

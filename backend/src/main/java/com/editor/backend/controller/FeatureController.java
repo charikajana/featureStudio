@@ -39,9 +39,10 @@ public class FeatureController {
 
     @GetMapping("/stats")
     public ResponseEntity<com.editor.backend.dto.TestStats> getTestStats(@RequestHeader("X-Username") String username,
-                                                                        @RequestParam String repoUrl) {
+                                                                         @RequestParam String repoUrl,
+                                                                         @RequestParam(required = false) String branch) {
         String repoPath = workspaceService.getRepoPath(username, repoUrl);
-        return ResponseEntity.ok(testStatsService.calculateStats(repoPath));
+        return ResponseEntity.ok(testStatsService.calculateStats(repoPath, branch));
     }
 
     @GetMapping("/tree")
