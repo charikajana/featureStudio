@@ -18,7 +18,8 @@ export const useAppLogic = () => {
     const [sidebarWidth, setSidebarWidth] = useState(300);
     const [isResizing, setIsResizing] = useState(false);
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-    const [activeView, setActiveView] = useState<'editor' | 'stats' | 'pipeline' | 'project-setup'>('editor');
+    const [activeView, setActiveView] = useState<'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer'>('editor');
+    const [stabilityFilter, setStabilityFilter] = useState<'all' | 'flaky'>('all');
     const [runModalOpen, setRunModalOpen] = useState(false);
     const [reposLoaded, setReposLoaded] = useState(false);
     const [allRepos, setAllRepos] = useState<any[]>([]);
@@ -225,7 +226,7 @@ export const useAppLogic = () => {
             targetFolder, status, sidebarWidth, isResizing,
             settingsModalOpen, activeView, runModalOpen, reposLoaded,
             allRepos, currentRunId, runDetailsModalOpen, pushModalOpen,
-            undoModalOpen
+            undoModalOpen, stabilityFilter
         },
         actions: {
             setUsername, setRepoUrl, setIsCloned, setTree, setCurrentFile,
@@ -233,7 +234,7 @@ export const useAppLogic = () => {
             setModalOpen, setTargetFolder, setStatus, setSidebarWidth,
             setIsResizing, setSettingsModalOpen, setActiveView, setRunModalOpen,
             setReposLoaded, setAllRepos, setCurrentRunId, setRunDetailsModalOpen,
-            setPushModalOpen, setUndoModalOpen,
+            setPushModalOpen, setUndoModalOpen, setStabilityFilter,
             showStatus, refreshTree, loadFile, handleSave, executePush,
             handleSwitchBranch, handleCreateBranch, handleSwitchRepo,
             executeUndo, executePipeline, handleCreateFeature, handleLogout

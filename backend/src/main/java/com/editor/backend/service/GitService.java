@@ -111,7 +111,14 @@ public class GitService {
             // 3. Ensure Remote URL is authenticated if needed
             String currentUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
             boolean isAzure = currentUrl != null && (currentUrl.contains("dev.azure.com") || currentUrl.contains("visualstudio.com"));
+            
+            // If the URL contains an '@' (embedded credentials), it often interferes with the CredentialsProvider for Azure.
+            // We set the username to empty string for Azure PATs as per standard practice.
             String username = isAzure ? "" : "token";
+
+            if (isAzure && currentUrl != null && currentUrl.contains("@")) {
+                log.warn("Detected embedded username in Azure remote URL. This may cause 'not authorized' errors. Recommendation: Use a clean URL without '@'.");
+            }
 
             // 4. Push to remote
             log.info("Pushing to origin: refs/heads/{}...", branchName);

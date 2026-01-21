@@ -12,6 +12,7 @@ import { Sidebar } from './components/Sidebar';
 import { TestStatsView } from './components/TestStatsView';
 import { PipelineExecutionView } from './components/PipelineExecutionView';
 import { ProjectSetupView } from './components/ProjectSetupView';
+import { StabilityExplorerView } from './components/StabilityExplorerView';
 import { Login } from './components/Login';
 import { useAppLogic } from './hooks/useAppLogic';
 import { WorkspaceView } from './components/WorkspaceView';
@@ -29,13 +30,14 @@ function App() {
     targetFolder, status, sidebarWidth, isResizing,
     settingsModalOpen, activeView,
     allRepos, currentRunId, runDetailsModalOpen, pushModalOpen,
-    undoModalOpen
+    undoModalOpen, stabilityFilter
   } = state;
 
   const {
     setUsername, setModalOpen, setTargetFolder, setStatus, setSidebarWidth,
     setIsResizing, setSettingsModalOpen, setActiveView, setRunModalOpen,
     setRunDetailsModalOpen, setPushModalOpen, setUndoModalOpen,
+    setStabilityFilter,
     refreshTree, loadFile, handleSave, executePush,
     handleSwitchBranch, handleCreateBranch, handleSwitchRepo,
     executeUndo, executePipeline, handleCreateFeature, handleLogout
@@ -129,7 +131,22 @@ function App() {
             </>
           ) : activeView === 'stats' ? (
             <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
-              <TestStatsView repoUrl={repoUrl} branch={currentBranch} />
+              <TestStatsView
+                repoUrl={repoUrl}
+                branch={currentBranch}
+                onViewAllScenarios={(filter: "all" | "flaky" | undefined) => {
+                  setStabilityFilter(filter || 'all');
+                  setActiveView('stability-explorer');
+                }}
+              />
+            </Box>
+          ) : activeView === 'stability-explorer' ? (
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
+              <StabilityExplorerView
+                repoUrl={repoUrl}
+                onBack={() => setActiveView('stats')}
+                initialFilter={stabilityFilter}
+              />
             </Box>
           ) : activeView === 'pipeline' ? (
             <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>

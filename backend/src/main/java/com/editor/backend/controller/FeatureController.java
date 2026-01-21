@@ -4,7 +4,9 @@ import com.editor.backend.dto.CreateFeatureRequest;
 import com.editor.backend.dto.FileNode;
 import com.editor.backend.dto.PushRequest;
 import com.editor.backend.model.GitRepository;
+import com.editor.backend.model.User;
 import com.editor.backend.repository.GitRepositoryRepository;
+import com.editor.backend.repository.UserRepository;
 import com.editor.backend.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class FeatureController {
     private final EncryptionService encryptionService;
     private final SuggestionService suggestionService;
     private final TestStatsService testStatsService;
+    private final UserRepository userRepository;
 
     @GetMapping("/suggestions")
     public ResponseEntity<java.util.Set<String>> getSuggestions(@RequestHeader("X-Username") String username,
@@ -42,7 +45,7 @@ public class FeatureController {
                                                                          @RequestParam String repoUrl,
                                                                          @RequestParam(required = false) String branch) {
         String repoPath = workspaceService.getRepoPath(username, repoUrl);
-        return ResponseEntity.ok(testStatsService.calculateStats(repoPath, branch));
+        return ResponseEntity.ok(testStatsService.calculateStats(username, repoUrl, repoPath, branch));
     }
 
     @GetMapping("/tree")
@@ -152,10 +155,26 @@ public class FeatureController {
             
             GitRepository gitRepo = gitRepoOpt.get();
             String localPath = gitRepo.getLocalPath();
-            String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
+            
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            String selectedTokenEncrypted = gitRepo.getPersonalAccessToken();
+            // Favor the latest global tokens if they are available
+            if (repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")) {
+                if (user.getAzurePat() != null && !user.getAzurePat().isEmpty()) {
+                    selectedTokenEncrypted = user.getAzurePat();
+                }
+            } else if (repoUrl.contains("github.com")) {
+                if (user.getGithubToken() != null && !user.getGithubToken().isEmpty()) {
+                    selectedTokenEncrypted = user.getGithubToken();
+                }
+            }
+            
+            String pat = encryptionService.decrypt(selectedTokenEncrypted);
             
             if (pat == null || pat.isEmpty()) {
-                return ResponseEntity.badRequest().body("GitHub Personal Access Token not configured");
+                return ResponseEntity.badRequest().body("Personal Access Token not configured. Please update in Settings -> Authentication.");
             }
 
             // Get current branch

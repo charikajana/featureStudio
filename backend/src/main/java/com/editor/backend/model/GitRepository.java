@@ -30,6 +30,8 @@ public class GitRepository {
     private String azureOrg;
     private String azureProject;
     private String azurePipelineId;
+    
+    private Integer lastSyncedRunId;
 
     private LocalDateTime createdAt;
     

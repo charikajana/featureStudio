@@ -23,7 +23,17 @@ public class PipelineService {
     private final UserRepository userRepository;
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final EncryptionService encryptionService;
+    private final com.editor.backend.repository.ScenarioResultRepository scenarioResultRepository;
     private final RestTemplate restTemplate = new RestTemplate();
+
+    private String normalizeRepoUrl(String url) {
+        if (url == null) return null;
+        String normalized = url.trim();
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized.toLowerCase();
+    }
 
     public Map<String, Object> triggerPipeline(String username, Map<String, Object> requestParams) throws Exception {
         String repoUrl = (String) requestParams.get("repoUrl");
@@ -96,6 +106,68 @@ public class PipelineService {
         }
     }
 
+    public void backfillRecentRuns(String username, String repoUrl, int limit) {
+        String normalizedUrl = normalizeRepoUrl(repoUrl);
+        
+        // Ensure we have a valid user context for backfill (fallback to repo owner if needed)
+        String activeUser = username;
+        if (activeUser == null || "anonymousUser".equals(activeUser)) {
+             java.util.List<com.editor.backend.model.GitRepository> repos = gitRepoRepository.findAllByRepositoryUrl(normalizedUrl);
+             if (!repos.isEmpty()) {
+                 activeUser = repos.get(0).getUsername();
+             }
+        }
+
+        try {
+            java.util.List<com.editor.backend.model.GitRepository> repos = gitRepoRepository.findAllByRepositoryUrl(normalizedUrl);
+            for (com.editor.backend.model.GitRepository repo : repos) {
+                 syncRepoRuns(activeUser, repo, limit);
+            }
+        } catch (Exception e) {
+            log.warn("Historical backfill aborted for {}: {}", normalizedUrl, e.getMessage());
+        }
+    }
+
+    public void syncNewRunsAcrossRepos() {
+        log.info("Starting background telemetry archival...");
+        java.util.List<com.editor.backend.model.GitRepository> allRepos = gitRepoRepository.findAll();
+        for (com.editor.backend.model.GitRepository repo : allRepos) {
+            try {
+                if (repo.getAzurePipelineId() != null) {
+                    syncRepoRuns(repo.getUsername(), repo, 50);
+                }
+            } catch (Exception e) {
+                log.error("Failed background sync for repo {}: {}", repo.getRepositoryUrl(), e.getMessage());
+            }
+        }
+    }
+
+    private void syncRepoRuns(String username, com.editor.backend.model.GitRepository repo, int limit) throws Exception {
+        java.util.List<Map<String, Object>> runs = listPipelineRuns(username, repo.getRepositoryUrl(), limit);
+        int lastId = repo.getLastSyncedRunId() != null ? repo.getLastSyncedRunId() : 0;
+        int maxProcessedId = lastId;
+
+        log.info("Checking for new runs for {}. Last synced: {}", repo.getRepositoryUrl(), lastId);
+        
+        // Sort runs by ID ascending to process in order
+        runs.sort(java.util.Comparator.comparingInt(r -> (Integer)r.get("runId")));
+
+        for (Map<String, Object> run : runs) {
+            Integer runId = (Integer) run.get("runId");
+            if (runId != null && runId > lastId && "completed".equalsIgnoreCase((String) run.get("state"))) {
+                log.info("Archiving new run: {} for {}", runId, repo.getRepositoryUrl());
+                getPipelineRunDetails(username, repo.getRepositoryUrl(), runId);
+                if (runId > maxProcessedId) maxProcessedId = runId;
+            }
+        }
+
+        if (maxProcessedId > lastId) {
+            repo.setLastSyncedRunId(maxProcessedId);
+            gitRepoRepository.save(repo);
+            log.info("Updated vault checkpoint for {} to {}", repo.getRepositoryUrl(), maxProcessedId);
+        }
+    }
+
     /**
      * Fetch detailed information about a specific pipeline run
      * This method allows ALL users to view pipeline details without requiring their own Azure PAT.
@@ -106,46 +178,31 @@ public class PipelineService {
      * @return Map containing run details, test results, execution time, etc.
      */
     public Map<String, Object> getPipelineRunDetails(String username, String repoUrl, int runId) throws Exception {
-        // User lookup is only for logging/audit purposes
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Use shared repository lookup
         java.util.List<com.editor.backend.model.GitRepository> repos = gitRepoRepository.findAllByRepositoryUrl(repoUrl);
-        if (repos.isEmpty()) {
-            throw new RuntimeException("Repository configuration not found for: " + repoUrl);
-        }
+        if (repos.isEmpty()) throw new RuntimeException("Repository configuration not found");
         
         com.editor.backend.model.GitRepository repo = repos.get(0);
-        
-        // Find a user who has configured Azure PAT for authentication
         User userWithPat = null;
         for (com.editor.backend.model.GitRepository r : repos) {
-            User repoOwner = userRepository.findByEmail(r.getUsername())
-                    .orElse(null);
+            User repoOwner = userRepository.findByEmail(r.getUsername()).orElse(null);
             if (repoOwner != null && repoOwner.getAzurePat() != null) {
                 userWithPat = repoOwner;
                 break;
             }
         }
         
-        if (userWithPat == null) {
-            throw new RuntimeException("No Azure DevOps credentials available for this repository.");
-        }
+        if (userWithPat == null) throw new RuntimeException("No Azure credentials available");
 
         String decryptedPat = encryptionService.decrypt(userWithPat.getAzurePat());
         String baseUrl = String.format("https://dev.azure.com/%s/%s/_apis", repo.getAzureOrg(), repo.getAzureProject());
 
-        log.info("User '{}' is viewing pipeline run details for runId {} in '{}' (using shared credentials)", 
-                 username, runId, repoUrl);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         String auth = ":" + decryptedPat;
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
-        headers.set("Authorization", "Basic " + encodedAuth);
-
+        headers.set("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         Map<String, Object> result = new java.util.HashMap<>();
 
@@ -158,84 +215,123 @@ public class PipelineService {
             if (runData != null) {
                 result.put("runId", runData.get("id"));
                 result.put("buildNumber", runData.get("name"));
-                result.put("state", runData.get("state")); // notStarted, inProgress, completed
-                result.put("result", runData.get("result")); // succeeded, failed, canceled
+                result.put("state", runData.get("state"));
+                result.put("result", runData.get("result"));
                 result.put("createdDate", runData.get("createdDate"));
-                result.put("finishedDate", runData.get("finishedDate"));
                 
-                // Construct custom URL pointing to test results tab
-                String customUrl = String.format(
-                    "https://dev.azure.com/%s/%s/_build/results?buildId=%d&view=ms.vss-test-web.build-test-results-tab",
-                    repo.getAzureOrg(), 
-                    repo.getAzureProject(), 
-                    runId
-                );
-                result.put("url", customUrl);
-
-                // Calculate execution time if finished
-                if (runData.get("createdDate") != null && runData.get("finishedDate") != null) {
-                    // You can calculate duration here if needed
-                    result.put("executionTime", "Calculated from dates");
-                }
-            }
-
-            // 2. Get Test Results (if run is completed or failed)
-            String testRunsUrl = baseUrl + "/test/runs?buildUri=vstfs:///Build/Build/" + runId + "&api-version=7.1";
-            
-            try {
-                ResponseEntity<Map> testRunsResponse = restTemplate.exchange(testRunsUrl, org.springframework.http.HttpMethod.GET, entity, Map.class);
-                Map<String, Object> testRunsData = testRunsResponse.getBody();
-
-                if (testRunsData != null && testRunsData.containsKey("value")) {
-                    java.util.List<Map<String, Object>> testRuns = (java.util.List<Map<String, Object>>) testRunsData.get("value");
-                    
-                    int totalPassed = 0;
-                    int totalFailed = 0;
-                    int totalSkipped = 0;
-                    int totalTests = 0;
-
-                    for (Map<String, Object> testRun : testRuns) {
-                        Map<String, Object> runStatistics = (Map<String, Object>) testRun.get("runStatistics");
-                        if (runStatistics != null) {
-                            java.util.List<Map<String, Object>> stats = (java.util.List<Map<String, Object>>) runStatistics.get("value");
-                            if (stats != null) {
-                                for (Map<String, Object> stat : stats) {
-                                    String outcome = (String) stat.get("outcome");
-                                    Integer count = (Integer) stat.get("count");
-                                    if (count != null) {
-                                        totalTests += count;
-                                        if ("Passed".equalsIgnoreCase(outcome)) {
-                                            totalPassed += count;
-                                        } else if ("Failed".equalsIgnoreCase(outcome)) {
-                                            totalFailed += count;
-                                        } else if ("NotExecuted".equalsIgnoreCase(outcome) || "Skipped".equalsIgnoreCase(outcome)) {
-                                            totalSkipped += count;
-                                        }
-                                    }
+                // Extract Branch/Ref
+                String branch = "unknown";
+                if (runData.containsKey("resources")) {
+                    Map<String, Object> resources = (Map<String, Object>) runData.get("resources");
+                    if (resources != null && resources.containsKey("repositories")) {
+                        Map<String, Object> repositories = (Map<String, Object>) resources.get("repositories");
+                        if (repositories != null && repositories.containsKey("self")) {
+                            Map<String, Object> selfRepo = (Map<String, Object>) repositories.get("self");
+                            if (selfRepo != null && selfRepo.containsKey("refName")) {
+                                branch = (String) selfRepo.get("refName");
+                                if (branch.startsWith("refs/heads/")) {
+                                    branch = branch.substring(11);
                                 }
                             }
                         }
                     }
-
-                    Map<String, Object> testResults = new java.util.HashMap<>();
-                    testResults.put("totalTests", totalTests);
-                    testResults.put("passed", totalPassed);
-                    testResults.put("failed", totalFailed);
-                    testResults.put("skipped", totalSkipped);
-                    testResults.put("passRate", totalTests > 0 ? (totalPassed * 100.0 / totalTests) : 0);
-                    result.put("testResults", testResults);
                 }
-            } catch (Exception e) {
-                log.warn("Could not fetch test results for run {}: {}", runId, e.getMessage());
-                result.put("testResults", Map.of("totalTests", 0, "passed", 0, "failed", 0, "skipped", 0));
+
+                // 2. Sync Individual Test Results if completed
+                if ("completed".equalsIgnoreCase((String) runData.get("state"))) {
+                    syncTestResults(baseUrl, runId, repoUrl, branch, (String) runData.get("finishedDate"), entity);
+                }
             }
+            
+            // Re-fetch summarized test results for the UI
+            String summaryUrl = baseUrl + "/test/runs?buildUri=vstfs:///Build/Build/" + runId + "&api-version=7.1";
+            ResponseEntity<Map> summaryResponse = restTemplate.exchange(summaryUrl, org.springframework.http.HttpMethod.GET, entity, Map.class);
+            result.put("testResults", summarizeTestRuns(summaryResponse.getBody()));
 
             return result;
-
         } catch (Exception e) {
-            log.error("Failed to fetch pipeline run details", e);
+            log.error("Failed to fetch pipeline details", e);
             throw new RuntimeException("Failed to fetch pipeline details: " + e.getMessage());
         }
+    }
+
+    private void syncTestResults(String baseUrl, int runId, String repoUrl, String branch, String finishedDate, HttpEntity<Void> entity) {
+        try {
+            // Azure stores test results under 'Test Runs'. We need to find the run IDs for this build first.
+            String runsUrl = baseUrl + "/test/runs?buildUri=vstfs:///Build/Build/" + runId + "&api-version=7.1";
+            ResponseEntity<Map> runsResponse = restTemplate.exchange(runsUrl, org.springframework.http.HttpMethod.GET, entity, Map.class);
+            Map<String, Object> runsData = runsResponse.getBody();
+            
+            if (runsData != null && runsData.containsKey("value")) {
+                java.util.List<Map<String, Object>> testRuns = (java.util.List<Map<String, Object>>) runsData.get("value");
+                for (Map<String, Object> testRun : testRuns) {
+                    Integer internalRunId = (Integer) testRun.get("id");
+                    
+                    // Now get individual results for this Test Run
+                    String resultsUrl = baseUrl + "/test/Runs/" + internalRunId + "/results?api-version=7.1";
+                    ResponseEntity<Map> resultsResponse = restTemplate.exchange(resultsUrl, org.springframework.http.HttpMethod.GET, entity, Map.class);
+                    Map<String, Object> resultsData = resultsResponse.getBody();
+                    
+                    if (resultsData != null && resultsData.containsKey("value")) {
+                        java.util.List<Map<String, Object>> results = (java.util.List<Map<String, Object>>) resultsData.get("value");
+                        for (Map<String, Object> res : results) {
+                            persistScenarioResult(repoUrl, runId, branch, res, finishedDate);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to sync individual test results for run {}: {}", runId, e.getMessage());
+        }
+    }
+
+    private void persistScenarioResult(String repoUrl, int runId, String branch, Map<String, Object> res, String finishedDate) {
+        String testName = (String) res.get("automatedTestName");
+        if (testName == null) {
+            testName = (String) res.get("testCaseTitle"); // Fallback for some frameworks
+        }
+        if (testName == null) return;
+
+        // Simple parser for BDD test names
+        String feature = "Unknown";
+        String scenario = testName;
+        if (testName.contains(".")) {
+            feature = testName.substring(0, testName.lastIndexOf("."));
+            scenario = testName.substring(testName.lastIndexOf(".") + 1);
+        }
+
+        com.editor.backend.model.ScenarioResult result = new com.editor.backend.model.ScenarioResult();
+        result.setRepoUrl(normalizeRepoUrl(repoUrl));
+        result.setBranch(branch); // Use the actual branch from the build
+        result.setFeatureFile(feature);
+        result.setScenarioName(scenario);
+        result.setStatus((String) res.get("outcome"));
+        result.setRunId(runId);
+        result.setTimestamp(java.time.LocalDateTime.parse(finishedDate.substring(0, 19)));
+        
+        try {
+            scenarioResultRepository.save(result);
+        } catch (Exception e) {
+            // Ignore duplicates
+        }
+    }
+
+    private Map<String, Object> summarizeTestRuns(Map<String, Object> data) {
+        Map<String, Object> summary = new java.util.HashMap<>();
+        int passed = 0, failed = 0, total = 0;
+        if (data != null && data.containsKey("value")) {
+            java.util.List<Map<String, Object>> runs = (java.util.List<Map<String, Object>>) data.get("value");
+            for (Map<String, Object> run : runs) {
+                passed += (Integer) run.getOrDefault("passedTests", 0);
+                failed += (Integer) run.getOrDefault("unanalyzedTests", 0);
+                total += (Integer) run.getOrDefault("totalTests", 0);
+            }
+        }
+        summary.put("totalTests", total);
+        summary.put("passed", passed);
+        summary.put("failed", failed);
+        summary.put("passRate", total > 0 ? (passed * 100.0 / total) : 0);
+        return summary;
     }
 
     /**

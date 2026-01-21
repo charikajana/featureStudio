@@ -34,6 +34,20 @@ public class RepositoryController {
     public ResponseEntity<String> cloneRepository(@RequestHeader("X-Username") String username,
                                                  @RequestBody CloneRepositoryRequest request) {
         try {
+            // Sanitize URL: Remove embedded credentials (e.g., https://user@dev.azure.com -> https://dev.azure.com)
+            String rawUrl = request.getRepositoryUrl();
+            String sanitizedUrl = rawUrl;
+            if (rawUrl.contains("@")) {
+                // Keep protocol (https://) but drop everything up to @
+                int protocolIndex = rawUrl.indexOf("://");
+                int atIndex = rawUrl.indexOf("@");
+                if (protocolIndex != -1 && atIndex > protocolIndex) {
+                    sanitizedUrl = rawUrl.substring(0, protocolIndex + 3) + rawUrl.substring(atIndex + 1);
+                    log.info("Sanitized repository URL from {} to {}", rawUrl, sanitizedUrl);
+                }
+            }
+            request.setRepositoryUrl(sanitizedUrl);
+
             String localPath = workspaceService.getRepoPath(username, request.getRepositoryUrl());
             File repoDir = new File(localPath);
             

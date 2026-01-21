@@ -144,5 +144,23 @@ export const featureService = {
         api.get<any[]>('/pipelines/runs', {
             params: { repoUrl, limit },
             headers: getAuthHeaders()
+        }),
+
+    getStabilityStats: (repoUrl: string, branch?: string) =>
+        api.get<any>('/pipelines/stability', {
+            params: { repoUrl, branch },
+            headers: getAuthHeaders()
+        }),
+
+    getStabilityExplorer: (repoUrl: string, page: number = 0, size: number = 20, search?: string, flakyOnly: boolean = false) =>
+        api.get<any>('/pipelines/stability/explorer', {
+            params: { repoUrl, page, size, search, flakyOnly },
+            headers: getAuthHeaders()
+        }),
+
+    syncVault: (repoUrl: string) =>
+        api.post('/pipelines/stability/sync', null, {
+            params: { repoUrl },
+            headers: getAuthHeaders()
         })
 };

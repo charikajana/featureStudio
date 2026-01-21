@@ -21,7 +21,9 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    Tooltip,
+    alpha
 } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -363,6 +365,38 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                     {repoBranches[repo.repositoryUrl] || '...'}
                                                 </Typography>
                                             </Box>
+
+                                            {repo.azurePipelineId && (
+                                                <Tooltip title="Archive new runs into local vault">
+                                                    <Button
+                                                        size="small"
+                                                        onClick={async () => {
+                                                            setLoading(true);
+                                                            try {
+                                                                await featureService.syncVault(repo.repositoryUrl);
+                                                                setSuccess(`Archival initiated for ${repo.repositoryUrl.split('/').pop()}`);
+                                                            } catch (e) {
+                                                                setError('Failed to initiate archival');
+                                                            } finally {
+                                                                setLoading(false);
+                                                            }
+                                                        }}
+                                                        disabled={loading}
+                                                        startIcon={<StorageIcon fontSize="small" />}
+                                                        sx={{
+                                                            borderRadius: 5,
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 800,
+                                                            color: '#059669',
+                                                            bgcolor: alpha('#10b981', 0.05),
+                                                            '&:hover': { bgcolor: alpha('#10b981', 0.1) }
+                                                        }}
+                                                    >
+                                                        Sync Vault
+                                                    </Button>
+                                                </Tooltip>
+                                            )}
+
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Button
                                                     size="small"

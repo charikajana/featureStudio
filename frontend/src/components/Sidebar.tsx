@@ -18,8 +18,8 @@ interface SidebarProps {
     username: string | null;
     currentBranch: string;
     availableBranches: string[];
-    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup';
-    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup') => void;
+    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer';
+    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer') => void;
     onSettingsOpen: () => void;
     onLogout: () => void;
     onRun: () => void;
@@ -32,7 +32,7 @@ interface SidebarItem {
     icon: any;
     title: string;
     type: 'nav' | 'action' | 'divider' | 'special';
-    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup';
+    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer';
     action?: string;
     danger?: boolean;
 }
