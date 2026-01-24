@@ -3,6 +3,7 @@ C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backen
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\TestStats.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\controller\FeatureController.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\model\User.java
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\TestCaseTrendRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\SuggestionService.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\FileNode.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\CloneRepositoryRequest.java
@@ -21,6 +22,7 @@ C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backen
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\AuthRequest.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\UserRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\config\CacheConfig.java
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\model\TestCaseTrend.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\controller\PipelineController.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\ScenarioResultRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\BackendApplication.java

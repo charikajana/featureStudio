@@ -11,14 +11,16 @@ import org.springframework.stereotype.Component;
 public class ArchiveScheduler {
 
     private final PipelineService pipelineService;
+    private final TestStatsService testStatsService;
 
-    // Run every 15 minutes
-    @Scheduled(fixedRate = 900000)
+    // Run every 15 minutes, starting 5 seconds after launch
+    @Scheduled(fixedRate = 900000, initialDelay = 5000)
     public void scheduleTelemetryArchival() {
         log.info("Triggering scheduled telemetry vault archival heartbeat...");
         try {
             pipelineService.syncNewRunsAcrossRepos();
-            log.info("Scheduled archival successfully completed.");
+            testStatsService.recordTrends();
+            log.info("Scheduled archival and trend recording successfully completed.");
         } catch (Exception e) {
             log.error("Scheduled archival failed: {}", e.getMessage());
         }

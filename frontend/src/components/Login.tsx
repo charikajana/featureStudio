@@ -30,6 +30,7 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
     const [error, setError] = useState('');
 
     const handleNext = async () => {
+        if (!email) return;
         setError('');
         setLoading(true);
         try {
@@ -132,6 +133,9 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your enterprise email"
                                 autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleNext();
+                                }}
                             />
                         )}
 
@@ -146,6 +150,9 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     autoFocus
                                     sx={{ mb: 2 }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleNext();
+                                    }}
                                 />
                                 {isNewUser && (
                                     <TextField
@@ -155,6 +162,9 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                                         variant="outlined"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleNext();
+                                        }}
                                     />
                                 )}
                             </Box>

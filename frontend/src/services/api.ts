@@ -60,6 +60,12 @@ export const featureService = {
             headers: getAuthHeaders()
         }),
 
+    getTrends: (repoUrl: string, branch: string = 'main') =>
+        api.get<any[]>('/features/trends', {
+            params: { repoUrl, branch },
+            headers: getAuthHeaders()
+        }),
+
     cloneRepo: (data: any) =>
         api.post('/repositories/clone', data, {
             headers: getAuthHeaders()

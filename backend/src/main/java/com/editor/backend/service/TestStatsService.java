@@ -20,7 +20,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -29,6 +32,8 @@ import java.util.Set;
 public class TestStatsService {
 
     private final PipelineService pipelineService;
+    private final com.editor.backend.repository.TestCaseTrendRepository trendRepository;
+    private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
 
     @Cacheable(value = "testStats", key = "{#username, #repoUrl, #branch}")
     public TestStats calculateStats(String username, String repoUrl, String repoPath, String branch) {
@@ -126,6 +131,64 @@ public class TestStatsService {
             log.error("Error calculating advanced stats: {}", e.getMessage());
         }
         return stats;
+    }
+
+    public void recordTrends() {
+        log.info("Recording test case growth trends for all repositories on main branch...");
+        List<com.editor.backend.model.GitRepository> allRepos = gitRepoRepository.findAll();
+        
+        for (com.editor.backend.model.GitRepository repo : allRepos) {
+            recordTrendForRepo(repo);
+        }
+    }
+
+    private void recordTrendForRepo(com.editor.backend.model.GitRepository repo) {
+        try {
+            String repoPath = repo.getLocalPath();
+            String repoUrl = repo.getRepositoryUrl();
+            String username = repo.getUsername();
+
+            try (Git git = Git.open(new java.io.File(repoPath))) {
+                Repository jgitRepo = git.getRepository();
+                // Get the actual branch name (handles cases where default is 'master' or 'main' or something else)
+                String branch = jgitRepo.getBranch();
+                
+                log.info("Recording trend for repository: {} on branch: {}", repoUrl, branch);
+                TestStats stats = calculateStats(username, repoUrl, repoPath, branch);
+
+                if (stats.getTotalTests() > 0) {
+                    com.editor.backend.model.TestCaseTrend trend = new com.editor.backend.model.TestCaseTrend();
+                    trend.setRepositoryUrl(repoUrl);
+                    trend.setBranch(branch);
+                    trend.setTestCount(stats.getTotalTests());
+                    trend.setCapturedAt(java.time.LocalDateTime.now());
+
+                    trendRepository.save(trend);
+                    log.info("Trend recorded for {} ({}): {} tests", repoUrl, branch, stats.getTotalTests());
+                } else {
+                    log.warn("No tests found for trend recording in {} on branch {}", repoUrl, branch);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to record trend for repo {}: {}", repo.getRepositoryUrl(), e.getMessage());
+        }
+    }
+
+    public List<com.editor.backend.model.TestCaseTrend> getTrends(String repoUrl, String branch) {
+        List<com.editor.backend.model.TestCaseTrend> trends = trendRepository.findByRepositoryUrlAndBranchOrderByCapturedAtAsc(repoUrl, branch);
+        
+        // If empty, try to trigger a quick record for first-time view
+        if (trends.isEmpty()) {
+            gitRepoRepository.findAll().stream()
+                .filter(r -> r.getRepositoryUrl().equals(repoUrl))
+                .findFirst()
+                .ifPresent(this::recordTrendForRepo);
+            
+            // Re-fetch
+            trends = trendRepository.findByRepositoryUrlAndBranchOrderByCapturedAtAsc(repoUrl, branch);
+        }
+        
+        return trends;
     }
 
     private int parseFeatureFromTree(Repository repository, ObjectId objectId, TestStats stats, Set<String> uniqueSteps) throws IOException {

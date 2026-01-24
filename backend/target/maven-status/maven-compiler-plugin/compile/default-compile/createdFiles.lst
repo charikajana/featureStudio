@@ -8,6 +8,8 @@ com\editor\backend\controller\FeatureController.class
 com\editor\backend\dto\CreateFeatureRequest.class
 com\editor\backend\dto\FileNode.class
 com\editor\backend\dto\StabilityStats$StabilityStatsBuilder.class
+com\editor\backend\dto\StabilityStats$BuildMetric$BuildMetricBuilder.class
+com\editor\backend\dto\StabilityStats$BuildMetric.class
 com\editor\backend\model\User.class
 com\editor\backend\model\GitRepository.class
 com\editor\backend\dto\StabilityStats$ScenarioStability$ScenarioStabilityBuilder.class
@@ -23,6 +25,7 @@ com\editor\backend\dto\ResetRequest.class
 com\editor\backend\dto\FileNode$FileNodeBuilder.class
 com\editor\backend\dto\PushRequest.class
 com\editor\backend\dto\StabilityStats$ScenarioStability.class
+com\editor\backend\model\TestCaseTrend.class
 com\editor\backend\repository\GitRepositoryRepository.class
 com\editor\backend\service\GitService.class
 com\editor\backend\dto\CloneRepositoryRequest.class
@@ -32,6 +35,7 @@ com\editor\backend\dto\AuthRequest.class
 com\editor\backend\dto\PagedStabilityResponse.class
 com\editor\backend\service\FileService.class
 com\editor\backend\dto\SettingsRequest.class
+com\editor\backend\repository\TestCaseTrendRepository.class
 com\editor\backend\dto\PagedStabilityResponse$PagedStabilityResponseBuilder.class
 com\editor\backend\service\ArchiveScheduler.class
 com\editor\backend\service\PipelineService.class

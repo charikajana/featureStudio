@@ -3,7 +3,8 @@ import { featureService } from '../services/api';
 import type { FileNode, CreateFeatureRequest } from '../types';
 
 export const useAppLogic = () => {
-    const [username, setUsername] = useState<string | null>(localStorage.getItem('username'));
+    // Always start with null to force Login Page on every app restart/refresh
+    const [username, setUsername] = useState<string | null>(null);
     const [repoUrl, setRepoUrl] = useState(localStorage.getItem('repoUrl') || '');
     const [isCloned, setIsCloned] = useState(!!localStorage.getItem('repoUrl'));
     const [tree, setTree] = useState<FileNode[]>([]);

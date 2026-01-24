@@ -48,6 +48,12 @@ public class FeatureController {
         return ResponseEntity.ok(testStatsService.calculateStats(username, repoUrl, repoPath, branch));
     }
 
+    @GetMapping("/trends")
+    public ResponseEntity<List<com.editor.backend.model.TestCaseTrend>> getTrends(@RequestParam String repoUrl,
+                                                                                 @RequestParam(defaultValue = "main") String branch) {
+        return ResponseEntity.ok(testStatsService.getTrends(repoUrl, branch));
+    }
+
     @GetMapping("/tree")
     public ResponseEntity<List<FileNode>> getTree(@RequestHeader("X-Username") String username,
                                                   @RequestParam String repoUrl) {
