@@ -11,20 +11,16 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
-import { BranchSelector } from './BranchSelector';
 
 interface SidebarProps {
     username: string | null;
-    currentBranch: string;
-    availableBranches: string[];
-    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer';
-    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer') => void;
+    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics';
+    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics') => void;
     onSettingsOpen: () => void;
     onLogout: () => void;
     onRun: () => void;
-    onSwitchBranch: (branchName: string) => Promise<void>;
-    onCreateBranch: (branchName: string, baseBranch: string) => Promise<void>;
 }
 
 interface SidebarItem {
@@ -32,7 +28,7 @@ interface SidebarItem {
     icon: any;
     title: string;
     type: 'nav' | 'action' | 'divider' | 'special';
-    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer';
+    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics';
     action?: string;
     danger?: boolean;
 }
@@ -95,23 +91,19 @@ const SidebarButton: FC<{
 
 export const Sidebar: FC<SidebarProps> = ({
     username,
-    currentBranch,
-    availableBranches,
     activeView,
     onViewChange,
     onSettingsOpen,
     onLogout,
-    onRun,
-    onSwitchBranch,
-    onCreateBranch
+    onRun
 }) => {
     const defaultOrder: SidebarItem[] = [
         { id: 'editor', icon: EditNoteIcon, title: 'Editor', type: 'nav', view: 'editor' },
         { id: 'project-setup', icon: FolderSpecialIcon, title: 'Project Management', type: 'nav', view: 'project-setup' },
         { id: 'divider-1', icon: null, title: '', type: 'divider' },
-        { id: 'branch-selector', icon: null, title: 'Branch', type: 'special' },
         { id: 'stats', icon: CheckCircleIcon, title: 'Tests Dashboard', type: 'nav', view: 'stats' },
         { id: 'pipeline', icon: MonitorHeartIcon, title: 'Pipeline Monitor', type: 'nav', view: 'pipeline' },
+        { id: 'analytics', icon: AssessmentIcon, title: 'Analytics Hub', type: 'nav', view: 'analytics' },
         { id: 'run', icon: PlayArrowIcon, title: 'Run Pipeline', type: 'action', action: 'run' },
         { id: 'suites', icon: LayersIcon, title: 'Suites', type: 'nav' },
     ];
@@ -121,11 +113,15 @@ export const Sidebar: FC<SidebarProps> = ({
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                // Map icons back because they can't be stringified
-                return parsed.map((p: any) => ({
+                // Map icons back and ensure NEW items added to defaultOrder are included
+                const existingItems = parsed.map((p: any) => ({
                     ...p,
                     icon: defaultOrder.find(d => d.id === p.id)?.icon || HelpOutlineIcon
                 }));
+
+                // Add any items in defaultOrder that aren't in the saved list (new features)
+                const newItems = defaultOrder.filter(d => !parsed.some((p: any) => p.id === d.id));
+                return [...existingItems, ...newItems];
             } catch (e) {
                 return defaultOrder;
             }
@@ -180,28 +176,6 @@ export const Sidebar: FC<SidebarProps> = ({
                     onDrop={handleDrop(item.id)}
                     sx={{ my: 0.5, borderBottom: '1px solid rgba(255,255,255,0.1)', width: 30, cursor: 'default' }}
                 />
-            );
-        }
-
-        if (item.id === 'branch-selector') {
-            return (
-                <Box
-                    key={item.id}
-                    draggable
-                    onDragStart={handleDragStart(item.id)}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop(item.id)}
-                    sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-                >
-                    <BranchSelector
-                        variant="sidebar"
-                        currentBranch={currentBranch}
-                        availableBranches={availableBranches}
-                        onSwitchBranch={onSwitchBranch}
-                        onCreateBranch={onCreateBranch}
-                        onNewBranchClick={() => onViewChange('project-setup')}
-                    />
-                </Box>
             );
         }
 

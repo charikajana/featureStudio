@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import type { FC } from 'react';
 import { Box, Typography } from '@mui/material';
 import { FileTree } from './FileTree';
@@ -18,12 +18,13 @@ interface EditorLayoutProps {
     content: string;
     setContent: (val: string) => void;
     currentBranch: string;
+    onSync: () => void;
 }
 
 export const EditorLayout: FC<EditorLayoutProps> = ({
     sidebarWidth, setIsResizing, tree, loadFile,
     setTargetFolder, setModalOpen, activeRepoName,
-    currentFile, content, setContent, currentBranch
+    currentFile, content, setContent, currentBranch, onSync
 }) => {
     const handleEditorDidMount = useCallback((editor: any) => {
         editor.layout();
@@ -44,6 +45,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
                 <FileTree
                     nodes={tree}
                     onSelect={loadFile}
+                    onSync={onSync}
                     onNewFile={(path) => { setTargetFolder(path); setModalOpen(true); }}
                     repoName={activeRepoName}
                 />

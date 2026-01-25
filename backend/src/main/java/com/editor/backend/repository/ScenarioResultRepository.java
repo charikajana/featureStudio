@@ -18,4 +18,7 @@ public interface ScenarioResultRepository extends JpaRepository<ScenarioResult, 
     List<Object[]> getStabilityStats(String repoUrl, String branch);
 
     List<ScenarioResult> findTop50ByRepoUrlAndBranchOrderByTimestampDesc(String repoUrl, String branch);
+    
+    java.util.Optional<ScenarioResult> findByRepoUrlAndRunIdAndFeatureFileAndScenarioName(
+        String repoUrl, Integer runId, String featureFile, String scenarioName);
 }

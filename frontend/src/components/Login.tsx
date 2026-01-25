@@ -132,6 +132,7 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your enterprise email"
+                                autoComplete="off"
                                 autoFocus
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleNext();
@@ -148,6 +149,7 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                                     variant="outlined"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="off"
                                     autoFocus
                                     sx={{ mb: 2 }}
                                     onKeyDown={(e) => {
@@ -162,6 +164,7 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                                         variant="outlined"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                        autoComplete="off"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') handleNext();
                                         }}

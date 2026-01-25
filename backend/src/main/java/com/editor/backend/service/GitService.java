@@ -21,28 +21,37 @@ import java.util.List;
 public class GitService {
 
     public void cloneRepository(String repoUrl, String pat, String localPath) throws GitAPIException {
-        log.info("Cloning repository {} to {}", repoUrl, localPath);
+        String sanitizedUrl = sanitizeRepoUrl(repoUrl);
+        log.info("Cloning repository {} to {}", sanitizedUrl, localPath);
         
-        boolean isAzure = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com");
-        String username = isAzure ? "" : "token";
-
-        // For Azure DevOps, embedding token in URL follows pattern https://:PAT@dev.azure.com/...
-        // But using CredentialsProvider is more reliable and handles special characters.
         Git.cloneRepository()
-                .setURI(repoUrl)
+                .setURI(sanitizedUrl)
                 .setDirectory(new File(localPath))
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, pat))
+                .setCredentialsProvider(getCredentialsProvider(sanitizedUrl, pat))
                 .call()
                 .close();
     }
 
     public void pullChanges(String localPath, String pat) throws IOException, GitAPIException {
         try (Git git = Git.open(new File(localPath))) {
+            ensureCleanRemote(git);
+            String url = git.getRepository().getConfig().getString("remote", "origin", "url");
+            var cp = getCredentialsProvider(url, pat);
+            
             String branchName = git.getRepository().getBranch();
             log.info("Attempting to pull changes for branch: {} at {}", branchName, localPath);
             
-            // Check if branch exists on remote before pulling
-            var branches = git.branchList().setListMode(org.eclipse.jgit.api.ListBranchCommand.ListMode.REMOTE).call();
+            // 1. Fetch latest from remote to update local view of remote branches
+            git.fetch()
+                    .setCredentialsProvider(cp)
+                    .setRemoveDeletedRefs(true)
+                    .call();
+
+            // 2. Check if branch exists on remote (now using updated local view of remotes)
+            var branches = git.branchList()
+                    .setListMode(org.eclipse.jgit.api.ListBranchCommand.ListMode.REMOTE)
+                    .call();
+            
             boolean existsOnRemote = branches.stream().anyMatch(ref -> ref.getName().endsWith("/" + branchName));
             
             if (!existsOnRemote) {
@@ -50,12 +59,10 @@ public class GitService {
                 return;
             }
 
-            boolean isAzure = git.getRepository().getConfig().getString("remote", "origin", "url").contains("dev.azure.com");
-            String username = isAzure ? "" : "token";
-
             PullResult result = git.pull()
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, pat))
+                    .setCredentialsProvider(cp)
                     .call();
+            
             if (!result.isSuccessful()) {
                 log.warn("Pull was not successful for {}: {}", branchName, result.toString());
             } else {
@@ -89,6 +96,7 @@ public class GitService {
 
     public void commitAndPush(String localPath, String pat, String message, String branchName, List<String> files) throws IOException, GitAPIException {
         try (Git git = Git.open(new File(localPath))) {
+            ensureCleanRemote(git);
             log.info("Committing and pushing changes to branch: {}", branchName);
             
             // 1. Add specific files or all
@@ -112,10 +120,6 @@ public class GitService {
             String currentUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
             boolean isAzure = currentUrl != null && (currentUrl.contains("dev.azure.com") || currentUrl.contains("visualstudio.com"));
             
-            // If the URL contains an '@' (embedded credentials), it often interferes with the CredentialsProvider for Azure.
-            // We set the username to empty string for Azure PATs as per standard practice.
-            String username = isAzure ? "" : "token";
-
             if (isAzure && currentUrl != null && currentUrl.contains("@")) {
                 log.warn("Detected embedded username in Azure remote URL. This may cause 'not authorized' errors. Recommendation: Use a clean URL without '@'.");
             }
@@ -125,7 +129,7 @@ public class GitService {
             
             Iterable<org.eclipse.jgit.transport.PushResult> results = git.push()
                     .setRemote("origin")
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, pat))
+                    .setCredentialsProvider(getCredentialsProvider(currentUrl, pat))
                     .setRefSpecs(new org.eclipse.jgit.transport.RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName))
                     .call();
             
@@ -164,9 +168,9 @@ public class GitService {
                 // 4. Fetch latest from remote to ensure we have latest refs
                 if (pat != null && !pat.isEmpty()) {
                     try {
+                        ensureCleanRemote(git);
                         String url = git.getRepository().getConfig().getString("remote", "origin", "url");
-                        String username = (url != null && url.contains("dev.azure.com")) ? "" : "token";
-                        git.fetch().setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, pat)).call();
+                        git.fetch().setCredentialsProvider(getCredentialsProvider(url, pat)).call();
                         log.info("Fetched latest from origin");
                     } catch (Exception e) {
                         log.warn("Fetch failed during reset: {}", e.getMessage());
@@ -231,7 +235,9 @@ public class GitService {
 
     public List<String> getAllBranches(String localPath, String pat) throws IOException, GitAPIException {
         try (Git git = Git.open(new File(localPath))) {
-            return git.branchList().setListMode(org.eclipse.jgit.api.ListBranchCommand.ListMode.ALL).call().stream()
+            return git.branchList()
+                    .setListMode(org.eclipse.jgit.api.ListBranchCommand.ListMode.ALL)
+                    .call().stream()
                     .map(ref -> {
                         String name = ref.getName();
                         if (name.startsWith("refs/heads/")) {
@@ -297,9 +303,9 @@ public class GitService {
             // 2. Fetch latest branch info with auth
             if (pat != null && !pat.isEmpty()) {
                 try {
+                    ensureCleanRemote(git);
                     String url = git.getRepository().getConfig().getString("remote", "origin", "url");
-                    String username = (url != null && url.contains("dev.azure.com")) ? "" : "token";
-                    git.fetch().setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, pat)).call();
+                    git.fetch().setCredentialsProvider(getCredentialsProvider(url, pat)).call();
                 } catch (Exception e) {
                     log.warn("Fetch before switch failed: {}", e.getMessage());
                 }
@@ -332,5 +338,38 @@ public class GitService {
             }
         }
         directory.delete();
+    }
+
+    private String sanitizeRepoUrl(String url) {
+        if (url == null || !url.contains("@")) return url;
+        
+        // Remove username/token from URL (e.g., https://user@dev.azure.com -> https://dev.azure.com)
+        int protocolIndex = url.indexOf("://");
+        int atIndex = url.lastIndexOf("@");
+        if (protocolIndex != -1 && atIndex > protocolIndex) {
+            return url.substring(0, protocolIndex + 3) + url.substring(atIndex + 1);
+        }
+        return url;
+    }
+
+    private void ensureCleanRemote(Git git) throws IOException {
+        String currentUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
+        if (currentUrl == null) return;
+        
+        String sanitizedUrl = sanitizeRepoUrl(currentUrl);
+        if (!currentUrl.equals(sanitizedUrl)) {
+            log.info("Fixing remote URL in .git/config: removing embedded credentials from {}", currentUrl);
+            git.getRepository().getConfig().setString("remote", "origin", "url", sanitizedUrl);
+            git.getRepository().getConfig().save();
+        }
+    }
+
+    private UsernamePasswordCredentialsProvider getCredentialsProvider(String url, String pat) {
+        boolean isAzure = url != null && (url.contains("dev.azure.com") || url.contains("visualstudio.com"));
+        // For Azure DevOps, an empty username is standard for PATs
+        // For GitHub, "token" is often used but empty can also work. 
+        // We'll stick to "" for Azure and "token" for others as it's proven.
+        String username = isAzure ? "" : "token";
+        return new UsernamePasswordCredentialsProvider(username, pat);
     }
 }

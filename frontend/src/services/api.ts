@@ -66,6 +66,18 @@ export const featureService = {
             headers: getAuthHeaders()
         }),
 
+    getAnalytics: (repoUrl: string, branch?: string) =>
+        api.get<any>('/features/analytics', {
+            params: { repoUrl, branch },
+            headers: getAuthHeaders()
+        }),
+
+    updateScenarioConfig: (repoUrl: string, config: any) =>
+        api.post('/features/analytics/config', config, {
+            params: { repoUrl },
+            headers: getAuthHeaders()
+        }),
+
     cloneRepo: (data: any) =>
         api.post('/repositories/clone', data, {
             headers: getAuthHeaders()
@@ -78,6 +90,12 @@ export const featureService = {
 
     resetRepo: (repoUrl: string, files: string[] = []) =>
         api.post('/repositories/reset', { repoUrl, files }, {
+            headers: getAuthHeaders()
+        }),
+
+    syncRepo: (repoUrl: string) =>
+        api.post('/repositories/sync', null, {
+            params: { repoUrl },
             headers: getAuthHeaders()
         }),
 

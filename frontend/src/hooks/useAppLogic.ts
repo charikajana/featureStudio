@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { featureService } from '../services/api';
 import type { FileNode, CreateFeatureRequest } from '../types';
 
@@ -19,7 +19,7 @@ export const useAppLogic = () => {
     const [sidebarWidth, setSidebarWidth] = useState(300);
     const [isResizing, setIsResizing] = useState(false);
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-    const [activeView, setActiveView] = useState<'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer'>('editor');
+    const [activeView, setActiveView] = useState<'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics'>('editor');
     const [stabilityFilter, setStabilityFilter] = useState<'all' | 'flaky'>('all');
     const [runModalOpen, setRunModalOpen] = useState(false);
     const [reposLoaded, setReposLoaded] = useState(false);
@@ -58,7 +58,7 @@ export const useAppLogic = () => {
         setTimeout(() => setStatus({ open: true, message, severity }), 10);
     };
 
-    const refreshTree = async () => {
+    const refreshTree = useCallback(async () => {
         try {
             const res = await featureService.getTree(repoUrl);
             setTree(res.data);
@@ -77,9 +77,9 @@ export const useAppLogic = () => {
         } catch (e) {
             showStatus('Failed to load project tree', 'error');
         }
-    };
+    }, [repoUrl]);
 
-    const loadFile = async (path: string) => {
+    const loadFile = useCallback(async (path: string) => {
         setCurrentFile(path);
         try {
             const res = await featureService.getContent(repoUrl, path);
@@ -87,9 +87,9 @@ export const useAppLogic = () => {
         } catch (e) {
             showStatus('Failed to load file', 'error');
         }
-    };
+    }, [repoUrl]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (!currentFile) return;
         try {
             await featureService.saveFile(repoUrl, currentFile, content);
@@ -98,9 +98,9 @@ export const useAppLogic = () => {
         } catch (e) {
             showStatus('Failed to save file', 'error');
         }
-    };
+    }, [repoUrl, currentFile, content, refreshTree]);
 
-    const executePush = async (request: { commitMessage: string, files: string[] }) => {
+    const executePush = useCallback(async (request: { commitMessage: string, files: string[] }) => {
         setPushModalOpen(false);
         setLoading(true);
         try {
@@ -113,9 +113,22 @@ export const useAppLogic = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [repoUrl, refreshTree]);
 
-    const handleSwitchBranch = async (branchName: string) => {
+    const handleSync = useCallback(async () => {
+        setLoading(true);
+        try {
+            await featureService.syncRepo(repoUrl);
+            showStatus('Project synced with remote', 'success');
+            await refreshTree();
+        } catch (e: any) {
+            showStatus(`Failed to sync: ${e.response?.data || e.message}`, 'error');
+        } finally {
+            setLoading(false);
+        }
+    }, [repoUrl, refreshTree]);
+
+    const handleSwitchBranch = useCallback(async (branchName: string) => {
         setLoading(true);
         try {
             await featureService.switchBranch(repoUrl, branchName);
@@ -127,9 +140,9 @@ export const useAppLogic = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [repoUrl, refreshTree]);
 
-    const handleCreateBranch = async (branchName: string, baseBranch: string) => {
+    const handleCreateBranch = useCallback(async (branchName: string, baseBranch: string) => {
         setLoading(true);
         try {
             const response = await featureService.createBranch(repoUrl, branchName, baseBranch);
@@ -141,9 +154,9 @@ export const useAppLogic = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [repoUrl, refreshTree]);
 
-    const handleSwitchRepo = (url: string) => {
+    const handleSwitchRepo = useCallback((url: string) => {
         if (!url) {
             setRepoUrl('');
             setIsCloned(false);
@@ -161,9 +174,9 @@ export const useAppLogic = () => {
                 featureService.getRepositories().then(({ data }) => setAllRepos(data));
             }
         }
-    };
+    }, [reposLoaded]);
 
-    const executeUndo = async (selectedFiles: string[]) => {
+    const executeUndo = useCallback(async (selectedFiles: string[]) => {
         setUndoModalOpen(false);
         setLoading(true);
         try {
@@ -181,9 +194,9 @@ export const useAppLogic = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [repoUrl, currentFile, loadFile, refreshTree]);
 
-    const executePipeline = async (params: { branch: string, templateParameters: Record<string, string> }) => {
+    const executePipeline = useCallback(async (params: { branch: string, templateParameters: Record<string, string> }) => {
         setLoading(true);
         try {
             const { data } = await featureService.triggerPipeline({
@@ -202,9 +215,9 @@ export const useAppLogic = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [repoUrl]);
 
-    const handleCreateFeature = async (request: CreateFeatureRequest) => {
+    const handleCreateFeature = useCallback(async (request: CreateFeatureRequest) => {
         try {
             await featureService.createFeature(repoUrl, request);
             setModalOpen(false);
@@ -213,7 +226,7 @@ export const useAppLogic = () => {
         } catch (e) {
             showStatus('Failed to create feature', 'error');
         }
-    };
+    }, [repoUrl, refreshTree]);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -237,7 +250,7 @@ export const useAppLogic = () => {
             setReposLoaded, setAllRepos, setCurrentRunId, setRunDetailsModalOpen,
             setPushModalOpen, setUndoModalOpen, setStabilityFilter,
             showStatus, refreshTree, loadFile, handleSave, executePush,
-            handleSwitchBranch, handleCreateBranch, handleSwitchRepo,
+            handleSwitchBranch, handleSync, handleCreateBranch, handleSwitchRepo,
             executeUndo, executePipeline, handleCreateFeature, handleLogout
         }
     };

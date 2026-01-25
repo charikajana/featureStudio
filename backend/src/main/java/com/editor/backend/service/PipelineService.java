@@ -154,8 +154,9 @@ public class PipelineService {
 
         for (Map<String, Object> run : runs) {
             Integer runId = (Integer) run.get("runId");
-            if (runId != null && runId > lastId && "completed".equalsIgnoreCase((String) run.get("state"))) {
-                log.info("Archiving new run: {} for {}", runId, repo.getRepositoryUrl());
+            if (runId != null && "completed".equalsIgnoreCase((String) run.get("state"))) {
+                // If it's a new run OR if it's a known run that might need duration detail update
+                log.info("Checking/Archiving run: {} for {}", runId, repo.getRepositoryUrl());
                 getPipelineRunDetails(username, repo.getRepositoryUrl(), runId);
                 if (runId > maxProcessedId) maxProcessedId = runId;
             }
@@ -307,13 +308,73 @@ public class PipelineService {
         result.setScenarioName(scenario);
         result.setStatus((String) res.get("outcome"));
         result.setRunId(runId);
+        
+        // Extract duration using robust parsing
+        Integer duration = extractDuration(res);
+        result.setDurationMillis(duration);
+        
         result.setTimestamp(java.time.LocalDateTime.parse(finishedDate.substring(0, 19)));
         
         try {
-            scenarioResultRepository.save(result);
+            java.util.Optional<com.editor.backend.model.ScenarioResult> existing = 
+                scenarioResultRepository.findByRepoUrlAndRunIdAndFeatureFileAndScenarioName(
+                    result.getRepoUrl(), result.getRunId(), result.getFeatureFile(), result.getScenarioName());
+            
+            if (existing.isPresent()) {
+                com.editor.backend.model.ScenarioResult e = existing.get();
+                // Only update duration if we actually found a new non-null value
+                if (duration != null) e.setDurationMillis(duration);
+                e.setStatus(result.getStatus());
+                e.setTimestamp(result.getTimestamp());
+                scenarioResultRepository.save(e);
+            } else {
+                scenarioResultRepository.save(result);
+            }
         } catch (Exception e) {
-            // Ignore duplicates
+            log.error("Failed to persist scenario result", e);
         }
+    }
+
+    private Integer extractDuration(Map<String, Object> res) {
+        // Option 1: durationInMs (Number)
+        if (res.containsKey("durationInMs") && res.get("durationInMs") instanceof Number) {
+            return ((Number) res.get("durationInMs")).intValue();
+        }
+        
+        // Option 2: duration (String or Number)
+        if (res.containsKey("duration")) {
+            Object d = res.get("duration");
+            if (d instanceof Number) {
+                return (int) (((Number) d).doubleValue() * 1000); 
+            }
+            if (d instanceof String) {
+                String durationStr = (String) d;
+                try {
+                    if (durationStr.contains(":")) {
+                        String[] parts = durationStr.split(":");
+                        double hours = Double.parseDouble(parts[0]);
+                        double minutes = Double.parseDouble(parts[1]);
+                        double seconds = Double.parseDouble(parts[2]);
+                        return (int) ((hours * 3600 + minutes * 60 + seconds) * 1000);
+                    }
+                    return (int) (Double.parseDouble(durationStr) * 1000);
+                } catch (Exception e) {}
+            }
+        }
+
+        // Option 3: Fallback calculation from startedDate and completedDate (Best for historical recovery)
+        try {
+            if (res.containsKey("startedDate") && res.containsKey("completedDate")) {
+                java.time.OffsetDateTime start = java.time.OffsetDateTime.parse((String) res.get("startedDate"));
+                java.time.OffsetDateTime end = java.time.OffsetDateTime.parse((String) res.get("completedDate"));
+                long diff = java.time.Duration.between(start, end).toMillis();
+                if (diff > 0) return (int) diff;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to calculate duration from timestamps: {}", e.getMessage());
+        }
+
+        return null;
     }
 
     private Map<String, Object> summarizeTestRuns(Map<String, Object> data) {

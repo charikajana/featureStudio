@@ -32,6 +32,7 @@ public class FeatureController {
     private final SuggestionService suggestionService;
     private final TestStatsService testStatsService;
     private final UserRepository userRepository;
+    private final ProjectAnalyticsService analyticsService;
 
     @GetMapping("/suggestions")
     public ResponseEntity<java.util.Set<String>> getSuggestions(@RequestHeader("X-Username") String username,
@@ -50,8 +51,36 @@ public class FeatureController {
 
     @GetMapping("/trends")
     public ResponseEntity<List<com.editor.backend.model.TestCaseTrend>> getTrends(@RequestParam String repoUrl,
+
                                                                                  @RequestParam(defaultValue = "main") String branch) {
         return ResponseEntity.ok(testStatsService.getTrends(repoUrl, branch));
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<com.editor.backend.dto.AnalyticsDTO> getAnalytics(@RequestHeader("X-Username") String username,
+                                                                           @RequestParam String repoUrl,
+                                                                           @RequestParam(required = false) String branch) {
+        String repoPath = workspaceService.getRepoPath(username, repoUrl);
+        return ResponseEntity.ok(analyticsService.calculateAdvancedAnalytics(username, repoUrl, repoPath, branch));
+    }
+
+    @PostMapping("/analytics/config")
+    public ResponseEntity<Void> saveScenarioConfig(@RequestParam String repoUrl,
+                                                   @RequestBody com.editor.backend.model.ScenarioConfiguration config) {
+        config.setRepoUrl(repoUrl);
+        // Find existing or update
+        java.util.Optional<com.editor.backend.model.ScenarioConfiguration> existing = 
+                analyticsService.getConfigurationRepository().findByRepoUrlAndFeatureFileAndScenarioName(
+                        repoUrl, config.getFeatureFile(), config.getScenarioName());
+        
+        if (existing.isPresent()) {
+            com.editor.backend.model.ScenarioConfiguration e = existing.get();
+            e.setExpectedDurationMillis(config.getExpectedDurationMillis());
+            analyticsService.getConfigurationRepository().save(e);
+        } else {
+            analyticsService.getConfigurationRepository().save(config);
+        }
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/tree")

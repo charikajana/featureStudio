@@ -20,7 +20,7 @@ import {
     StepLabel,
     Alert,
     CircularProgress,
-    Divider
+    Paper
 } from '@mui/material';
 import { featureService } from '../services/api';
 
@@ -247,6 +247,3 @@ export const PushChangesModal: FC<PushChangesModalProps> = ({ open, onClose, onP
         </Dialog>
     );
 };
-
-// Internal Paper for the list
-import { Paper } from '@mui/material';

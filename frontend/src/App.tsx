@@ -18,6 +18,7 @@ import { useAppLogic } from './hooks/useAppLogic';
 import { WorkspaceView } from './components/WorkspaceView';
 import { EditorLayout } from './components/EditorLayout';
 import { AppModals } from './components/AppModals';
+import { AdvancedAnalyticsView } from './components/AdvancedAnalyticsView';
 
 const MIN_SIDEBAR_WIDTH = 250;
 const MAX_SIDEBAR_WIDTH = 600;
@@ -38,7 +39,7 @@ function App() {
     setIsResizing, setSettingsModalOpen, setActiveView, setRunModalOpen,
     setRunDetailsModalOpen, setPushModalOpen, setUndoModalOpen,
     setStabilityFilter,
-    refreshTree, loadFile, handleSave, executePush,
+    refreshTree, loadFile, handleSave, handleSync, executePush,
     handleSwitchBranch, handleCreateBranch, handleSwitchRepo,
     executeUndo, executePipeline, handleCreateFeature, handleLogout
   } = actions;
@@ -84,10 +85,15 @@ function App() {
       <CssBaseline />
       <AppHeader
         onSave={handleSave}
+        onSync={handleSync}
         onPush={() => setPushModalOpen(true)}
         onReset={() => setUndoModalOpen(true)}
         currentRepoName={activeRepoName}
         activeView={activeView}
+        currentBranch={currentBranch}
+        availableBranches={availableBranches}
+        onSwitchBranch={handleSwitchBranch}
+        onCreateBranch={handleCreateBranch}
       />
 
       <Box sx={{ display: 'flex', flex: 1, width: '100%', overflow: 'hidden', position: 'relative' }}>
@@ -98,10 +104,6 @@ function App() {
           onSettingsOpen={() => setSettingsModalOpen(true)}
           activeView={activeView}
           onViewChange={setActiveView}
-          currentBranch={currentBranch}
-          availableBranches={availableBranches}
-          onSwitchBranch={handleSwitchBranch}
-          onCreateBranch={handleCreateBranch}
         />
 
         <Box sx={{ flexGrow: 1, display: 'flex', overflow: 'hidden' }}>
@@ -119,6 +121,7 @@ function App() {
                   currentFile={currentFile}
                   content={content}
                   setContent={actions.setContent}
+                  onSync={handleSync}
                   currentBranch={currentBranch}
                 />
               ) : (
@@ -146,6 +149,7 @@ function App() {
                 repoUrl={repoUrl}
                 onBack={() => setActiveView('stats')}
                 initialFilter={stabilityFilter}
+                onSync={handleSync}
               />
             </Box>
           ) : activeView === 'pipeline' ? (
@@ -160,6 +164,15 @@ function App() {
                   handleSwitchRepo(url);
                   setActiveView('editor');
                 }}
+              />
+            </Box>
+          ) : activeView === 'analytics' ? (
+            <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+              <AdvancedAnalyticsView
+                repoUrl={repoUrl}
+                branch={currentBranch}
+                onBack={() => setActiveView('editor')}
+                onSync={handleSync}
               />
             </Box>
           ) : null}

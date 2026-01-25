@@ -18,13 +18,15 @@ import {
     Description,
     ExpandLess,
     ExpandMore,
-    Add
+    Add,
+    Sync as SyncIcon
 } from '@mui/icons-material';
 import type { FileNode } from '../types';
 
 interface FileTreeProps {
     nodes: FileNode[];
     onSelect: (path: string) => void;
+    onSync?: () => void;
     onNewFile: (folderPath: string) => void;
     repoName?: string;
 }
@@ -172,7 +174,7 @@ const FileTreeItem: FC<{
     );
 };
 
-export const FileTree: FC<FileTreeProps> = ({ nodes, onSelect, onNewFile, repoName }) => {
+export const FileTree: FC<FileTreeProps> = ({ nodes, onSelect, onSync, onNewFile, repoName }) => {
     return (
         <Box
             sx={{
@@ -196,18 +198,35 @@ export const FileTree: FC<FileTreeProps> = ({ nodes, onSelect, onNewFile, repoNa
                         {repoName?.toUpperCase() || 'NOT CONNECTED'}
                     </Typography>
                 </Box>
-                <IconButton
-                    size="small"
-                    onClick={() => onNewFile('/')}
-                    sx={{
-                        bgcolor: 'white',
-                        border: '1px solid #e2e8f0',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                        '&:hover': { bgcolor: '#f8fafc' }
-                    }}
-                >
-                    <Add sx={{ fontSize: 16, color: '#6366f1' }} />
-                </IconButton>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    {onSync && (
+                        <IconButton
+                            size="small"
+                            onClick={onSync}
+                            title="Sync with Remote (Pull)"
+                            sx={{
+                                bgcolor: 'white',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                '&:hover': { bgcolor: '#f8fafc' }
+                            }}
+                        >
+                            <SyncIcon sx={{ fontSize: 16, color: '#6366f1' }} />
+                        </IconButton>
+                    )}
+                    <IconButton
+                        size="small"
+                        onClick={() => onNewFile('/')}
+                        sx={{
+                            bgcolor: 'white',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            '&:hover': { bgcolor: '#f8fafc' }
+                        }}
+                    >
+                        <Add sx={{ fontSize: 16, color: '#6366f1' }} />
+                    </IconButton>
+                </Box>
             </Box>
             <List dense sx={{ overflowY: 'auto', flexGrow: 1, py: 1 }}>
                 {nodes.map((node) => (

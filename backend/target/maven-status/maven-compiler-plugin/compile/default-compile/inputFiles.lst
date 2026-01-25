@@ -1,3 +1,4 @@
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\AnalyticsDTO.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\SettingsRequest.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\FileService.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\TestStats.java
@@ -13,6 +14,7 @@ C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backen
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\controller\RepositoryController.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\StabilityStats.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\ArchiveScheduler.java
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\ProjectAnalyticsService.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\GitService.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\SecurityConfig.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\PushRequest.java

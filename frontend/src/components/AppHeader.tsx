@@ -3,21 +3,33 @@ import { Box, AppBar, Toolbar, Typography, IconButton } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SyncIcon from '@mui/icons-material/Sync';
+import { BranchSelector } from './BranchSelector';
 
 interface AppHeaderProps {
     onSave: () => void;
+    onSync: () => void;
     onPush: () => void;
     onReset: () => void;
     currentRepoName?: string;
     activeView: string;
+    currentBranch: string;
+    availableBranches: string[];
+    onSwitchBranch: (branchName: string) => Promise<void>;
+    onCreateBranch: (branchName: string, baseBranch: string) => Promise<void>;
 }
 
 export const AppHeader: FC<AppHeaderProps> = ({
     onSave,
+    onSync,
     onPush,
     onReset,
     currentRepoName,
-    activeView
+    activeView,
+    currentBranch,
+    availableBranches,
+    onSwitchBranch,
+    onCreateBranch
 }) => {
     const isEditor = activeView === 'editor';
     return (
@@ -77,6 +89,17 @@ export const AppHeader: FC<AppHeaderProps> = ({
 
                 {/* Right Section: Actions */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {/* Branch Selector moved here */}
+                    <Box sx={{ mr: 1 }}>
+                        <BranchSelector
+                            variant="header"
+                            currentBranch={currentBranch}
+                            availableBranches={availableBranches}
+                            onSwitchBranch={onSwitchBranch}
+                            onCreateBranch={onCreateBranch}
+                        />
+                    </Box>
+
                     <IconButton
                         onClick={onSave}
                         disabled={!currentRepoName || !isEditor}
@@ -115,6 +138,24 @@ export const AppHeader: FC<AppHeaderProps> = ({
                     </IconButton>
 
                     <Box sx={{ width: '1px', height: 24, bgcolor: '#f1f5f9', mx: 0.5 }} />
+
+                    <IconButton
+                        onClick={onSync}
+                        disabled={!currentRepoName || (!isEditor && activeView !== 'pipeline')}
+                        title="Sync with Remote (Pull)"
+                        sx={{
+                            bgcolor: 'rgba(99, 102, 241, 0.05)',
+                            color: '#6366f1',
+                            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.1)', transform: 'translateY(-1px)' },
+                            '&.Mui-disabled': { bgcolor: 'transparent', color: '#cbd5e1' },
+                            borderRadius: '10px',
+                            width: 38,
+                            height: 38,
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <SyncIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
 
                     <IconButton
                         onClick={onReset}

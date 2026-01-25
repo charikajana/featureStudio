@@ -13,8 +13,8 @@ public class ArchiveScheduler {
     private final PipelineService pipelineService;
     private final TestStatsService testStatsService;
 
-    // Run every 15 minutes, starting 5 seconds after launch
-    @Scheduled(fixedRate = 900000, initialDelay = 5000)
+    // Run every 2 minutes to keep execution results fresh automatically
+    @Scheduled(fixedRate = 120000, initialDelay = 5000)
     public void scheduleTelemetryArchival() {
         log.info("Triggering scheduled telemetry vault archival heartbeat...");
         try {

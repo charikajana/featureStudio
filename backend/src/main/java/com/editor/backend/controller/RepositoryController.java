@@ -5,9 +5,7 @@ import com.editor.backend.model.GitRepository;
 import com.editor.backend.model.User;
 import com.editor.backend.repository.GitRepositoryRepository;
 import com.editor.backend.repository.UserRepository;
-import com.editor.backend.service.EncryptionService;
-import com.editor.backend.service.GitService;
-import com.editor.backend.service.WorkspaceService;
+import com.editor.backend.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +27,8 @@ public class RepositoryController {
     private final GitRepositoryRepository gitRepoRepository;
     private final EncryptionService encryptionService;
     private final UserRepository userRepository;
+    private final PipelineService pipelineService;
+    private final TestStatsService testStatsService;
 
     @PostMapping("/clone")
     public ResponseEntity<String> cloneRepository(@RequestHeader("X-Username") String username,
@@ -38,9 +38,9 @@ public class RepositoryController {
             String rawUrl = request.getRepositoryUrl();
             String sanitizedUrl = rawUrl;
             if (rawUrl.contains("@")) {
-                // Keep protocol (https://) but drop everything up to @
+                // Keep protocol (https://) but drop everything up to the last @
                 int protocolIndex = rawUrl.indexOf("://");
-                int atIndex = rawUrl.indexOf("@");
+                int atIndex = rawUrl.lastIndexOf("@");
                 if (protocolIndex != -1 && atIndex > protocolIndex) {
                     sanitizedUrl = rawUrl.substring(0, protocolIndex + 3) + rawUrl.substring(atIndex + 1);
                     log.info("Sanitized repository URL from {} to {}", rawUrl, sanitizedUrl);
@@ -130,6 +130,53 @@ public class RepositoryController {
         }
     }
 
+    @PostMapping("/sync")
+    public ResponseEntity<String> syncRepository(@RequestHeader("X-Username") String username,
+                                                 @RequestParam String repoUrl) {
+        try {
+            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+            if (gitRepoOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Repository not found for user");
+            }
+            
+            GitRepository gitRepo = gitRepoOpt.get();
+            
+            // Critical: Always fetch the latest PAT from user settings to allow synchronization
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            String latestPatEncrypted = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")
+                    ? user.getAzurePat()
+                    : user.getGithubToken();
+            
+            if (latestPatEncrypted != null && !latestPatEncrypted.equals(gitRepo.getPersonalAccessToken())) {
+                log.info("Updating repository PAT with latest from user settings for {}", repoUrl);
+                gitRepo.setPersonalAccessToken(latestPatEncrypted);
+                gitRepoRepository.save(gitRepo);
+            }
+
+            String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
+            
+            // 1. Sync Files from Git
+            gitService.pullChanges(gitRepo.getLocalPath(), pat);
+            
+            // 2. Sync Execution Results from Azure DevOps (Telemetry)
+            // This ensures "Performance Analysis" and "Stability Explorer" are updated immediately
+            if (gitRepo.getAzurePipelineId() != null) {
+                log.info("Triggering telemetry backfill for {} during sync", repoUrl);
+                pipelineService.backfillRecentRuns(username, repoUrl, 20);
+            }
+            
+            // 3. Record Test Case Trends
+            testStatsService.recordTrends();
+            
+            return ResponseEntity.ok("Repository and telemetry synced with remote");
+        } catch (Exception e) {
+            log.error("Error syncing repository", e);
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/current-branch")
     public ResponseEntity<String> getCurrentBranch(@RequestHeader("X-Username") String username,
                                                    @RequestParam String repoUrl) {
@@ -159,6 +206,18 @@ public class RepositoryController {
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
+
+            // Refresh PAT from user record
+            User user = userRepository.findByEmail(username).orElse(null);
+            if (user != null) {
+                String latestPat = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")
+                        ? user.getAzurePat() : user.getGithubToken();
+                if (latestPat != null && !latestPat.equals(gitRepo.getPersonalAccessToken())) {
+                    gitRepo.setPersonalAccessToken(latestPat);
+                    gitRepoRepository.save(gitRepo);
+                }
+            }
+
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
             java.util.List<String> branches = gitService.getAllBranches(gitRepo.getLocalPath(), pat);
             
@@ -231,6 +290,18 @@ public class RepositoryController {
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
+
+            // Refresh PAT from user record
+            User user = userRepository.findByEmail(username).orElse(null);
+            if (user != null) {
+                String latestPat = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")
+                        ? user.getAzurePat() : user.getGithubToken();
+                if (latestPat != null && !latestPat.equals(gitRepo.getPersonalAccessToken())) {
+                    gitRepo.setPersonalAccessToken(latestPat);
+                    gitRepoRepository.save(gitRepo);
+                }
+            }
+
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
             gitService.switchBranch(gitRepo.getLocalPath(), branchName, pat);
             

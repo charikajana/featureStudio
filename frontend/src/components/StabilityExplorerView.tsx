@@ -29,16 +29,20 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import { featureService } from '../services/api';
 
 interface StabilityExplorerViewProps {
     repoUrl: string;
     onBack: () => void;
     initialFilter?: 'all' | 'flaky';
+    onSync?: () => Promise<void>;
 }
 
-export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl, onBack, initialFilter = 'all' }) => {
+export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl, onBack, initialFilter = 'all', onSync }) => {
     const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
+    const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
     const [data, setData] = useState<any>(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(15);
@@ -56,10 +60,22 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
         try {
             const res = await featureService.getStabilityExplorer(repoUrl, page, rowsPerPage, debouncedSearch, onlyFlaky);
             setData(res.data);
+            setLastRefresh(new Date());
         } catch (error) {
             console.error('Error fetching stability explorer:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSync = async () => {
+        if (!onSync) return;
+        setSyncing(true);
+        try {
+            await onSync();
+            await fetchData();
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -90,9 +106,53 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
                         <ArrowBackIcon fontSize="small" />
                     </IconButton>
                     <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-1px' }}>
-                            Automation Quality Hub
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-1px' }}>
+                                Automation Quality Hub
+                            </Typography>
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.8,
+                                bgcolor: 'rgba(99, 102, 241, 0.05)',
+                                px: 1.2,
+                                py: 0.4,
+                                borderRadius: '20px',
+                                border: '1px solid rgba(99, 102, 241, 0.1)'
+                            }}>
+                                <Box sx={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    bgcolor: syncing ? '#6366f1' : '#22c55e',
+                                    animation: syncing ? 'pulse 1.5s infinite' : 'none',
+                                    '@keyframes pulse': {
+                                        '0%': { opacity: 1, transform: 'scale(1)' },
+                                        '50%': { opacity: 0.4, transform: 'scale(1.2)' },
+                                        '100%': { opacity: 1, transform: 'scale(1)' }
+                                    }
+                                }} />
+                                <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 700, fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
+                                    {syncing ? 'SYNCING...' : `AUTO-SYNCED: ${lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                </Typography>
+                                <Tooltip title="Direct Sync Now">
+                                    <IconButton
+                                        size="small"
+                                        disabled={syncing}
+                                        onClick={handleSync}
+                                        sx={{
+                                            p: 0,
+                                            ml: 0.5,
+                                            color: '#6366f1',
+                                            '&:hover': { bgcolor: 'transparent', transform: 'rotate(180deg)' },
+                                            transition: 'transform 0.4s'
+                                        }}
+                                    >
+                                        <AutorenewIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                        </Box>
                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
                             Deep-dive analysis for {data?.totalCount || 0} scenarios across the project lifecycle
                         </Typography>
