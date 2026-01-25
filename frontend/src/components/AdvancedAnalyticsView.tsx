@@ -38,7 +38,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SecurityIcon from '@mui/icons-material/Security';
-import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
 import { featureService } from '../services/api';
 
 const Transition = React.forwardRef(function Transition(
@@ -1255,14 +1254,6 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                                                     </g>
                                                                 );
                                                             })}
-                                                            {showPassRate && (
-                                                                <g>
-                                                                    <text x="785" y="200" textAnchor="middle" transform="rotate(90 785,200)" fill="#6366f1" style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Stability %</text>
-                                                                    {[0, 25, 50, 75, 100].map(v => (
-                                                                        <text key={`r-tick-${v}`} x="765" y={350 - (v / 100) * 300} textAnchor="start" dominantBaseline="middle" fill="#818cf8" style={{ fontSize: '10px', fontWeight: 900 }}>{v}%</text>
-                                                                    ))}
-                                                                </g>
-                                                            )}
                                                         </g>
                                                     );
                                                 })()}
@@ -1275,10 +1266,8 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
 
                                                     data.recentRuns.forEach((run: any, idx: number) => {
                                                         const x = 60 + (idx * barGap);
-                                                        const total = run.passedCount + run.failedCount + run.skippedCount;
-                                                        const passRatePercent = (run.passedCount / Math.max(1, total)) * 100;
-                                                        // Pass rate trend y is separate scale (0-100%)
-                                                        const yTrend = 350 - (passRatePercent / 100) * 300;
+                                                        // Pass rate trend now follows the Passed Count volume scale to align with bar segments
+                                                        const yTrend = 350 - (run.passedCount / maxTotal) * 300;
                                                         trendPoints.push({ x: x + barWidth / 2, y: yTrend });
                                                     });
 
@@ -1296,9 +1285,12 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                                                         key={`bar-${run.runId}`}
                                                                         onMouseEnter={() => setHoveredRunIndex(idx)}
                                                                         onMouseLeave={() => setHoveredRunIndex(null)}
-                                                                        onClick={() => run.url && window.open(run.url, '_blank')}
+                                                                        onClick={() => run.url ? window.open(run.url, '_blank') : console.warn('No build URL available for run', run.runId)}
                                                                         style={{ cursor: run.url ? 'pointer' : 'default' }}
                                                                     >
+                                                                        {/* Permanent transparent hitbox to ensure entire column is clickable */}
+                                                                        <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="transparent" />
+
                                                                         {hoveredRunIndex === idx && (
                                                                             <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="rgba(99, 102, 241, 0.05)" rx="16" />
                                                                         )}
@@ -1424,15 +1416,14 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
 
                                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5, mt: 5, pb: 1 }}>
                                         {[
-                                            { grad: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', l: 'Passed', val: data.recentRuns?.reduce((a: any, b: any) => a + (b.passedCount || 0), 0) },
-                                            { grad: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', l: 'Failed', val: data.recentRuns?.reduce((a: any, b: any) => a + (b.failedCount || 0), 0) },
-                                            { grad: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', l: 'Skipped', val: data.recentRuns?.reduce((a: any, b: any) => a + (b.skippedCount || 0), 0) }
+                                            { grad: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', l: 'Passed' },
+                                            { grad: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', l: 'Failed' },
+                                            { grad: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', l: 'Skipped' }
                                         ].map(leg => (
                                             <Box key={leg.l} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1, borderRadius: '12px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
                                                 <Box sx={{ width: 12, height: 12, borderRadius: '50%', background: leg.grad, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
                                                 <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8 }}>
                                                     <Typography variant="caption" sx={{ fontWeight: 900, color: '#1e293b', textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.5px' }}>{leg.l}</Typography>
-                                                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8', fontSize: '0.65rem' }}>{leg.val}</Typography>
                                                 </Box>
                                             </Box>
                                         ))}
@@ -1484,51 +1475,6 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                             </Box>
                                         </Paper>
                                     ))}
-                                    {/* Drift Intelligence */}
-                                    <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', bgcolor: 'white', maxHeight: '40%', display: 'flex', flexDirection: 'column' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                            <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}><SentimentVeryDissatisfiedIcon /></Box>
-                                            <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1rem' }}>Drift Intelligence</Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, overflowY: 'auto' }}>
-                                            {data.driftReasons?.map((reason: string, i: number) => (
-                                                <Box key={i} sx={{ p: 1.5, borderRadius: '12px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', gap: 1.5 }}>
-                                                    <Box sx={{ mt: 0.5, width: 6, height: 6, borderRadius: '50%', bgcolor: reason.includes('Regression') ? '#ef4444' : '#6366f1', flexShrink: 0 }} />
-                                                    <Typography variant="caption" sx={{ color: '#334155', fontWeight: 600, lineHeight: 1.4 }}>{reason}</Typography>
-                                                </Box>
-                                            ))}
-                                        </Box>
-                                    </Paper>
-
-                                    {/* Top Regressors */}
-                                    <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', bgcolor: 'white', flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}><BugReportIcon /></Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1rem' }}>Regression Impact</Typography>
-                                            </Box>
-                                            <Chip label="Top 5" size="small" sx={{ fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
-                                        </Box>
-
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', flexGrow: 1 }}>
-                                            {data.topRegressors?.length > 0 ? data.topRegressors.slice(0, 5).map((reg: any, i: number) => (
-                                                <Box key={i} sx={{ pb: 2, borderBottom: i < 4 ? '1px solid #f1f5f9' : 'none' }}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                        <Typography variant="caption" sx={{ fontWeight: 800, color: '#1e293b' }} noWrap>{reg.scenarioName}</Typography>
-                                                        <Typography variant="caption" sx={{ fontWeight: 900, color: '#ef4444' }}>{reg.delta}%</Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.65rem' }}>{reg.previousPassRate}% → {reg.recentPassRate}%</Typography>
-                                                        <LinearProgress variant="determinate" value={reg.recentPassRate} sx={{ flexGrow: 1, height: 4, borderRadius: 2, bgcolor: '#f1f5f9', '& .MuiLinearProgress-bar': { bgcolor: '#ef4444' } }} />
-                                                    </Box>
-                                                </Box>
-                                            )) : (
-                                                <Box sx={{ textAlign: 'center', py: 4, bgcolor: '#f8fafc', borderRadius: '16px' }}>
-                                                    <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>No active regressions detected</Typography>
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    </Paper>
                                 </Box>
                             </Grid>
                         </Grid>
