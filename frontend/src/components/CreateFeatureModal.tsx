@@ -87,7 +87,7 @@ export const CreateFeatureModal: FC<CreateFeatureModalProps> = ({
     const validation = validateName(featureName);
 
     return (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
+        <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
             <DialogTitle sx={{ fontWeight: 800, color: '#0f172a', py: 3 }}>Create New Feature File</DialogTitle>
             <DialogContent dividers sx={{ bgcolor: '#f8fafc' }}>
                 <Stepper activeStep={activeStep} sx={{ py: 3, mb: 2 }}>

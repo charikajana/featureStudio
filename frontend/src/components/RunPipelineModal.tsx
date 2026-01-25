@@ -75,7 +75,7 @@ export const RunPipelineModal: FC<RunPipelineModalProps> = ({
     };
 
     return (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}>
+        <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { borderRadius: 4, overflow: 'hidden' } } }}>
             <DialogTitle sx={{
                 display: 'flex',
                 alignItems: 'center',

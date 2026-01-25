@@ -113,7 +113,7 @@ export const PipelineRunDetailsModal: FC<PipelineRunDetailsModalProps> = ({
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4, overflow: 'hidden' } } }}>
             <DialogTitle sx={{
                 display: 'flex',
                 alignItems: 'center',

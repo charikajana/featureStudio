@@ -30,6 +30,22 @@ public class AnalyticsDTO {
     private double globalAverageDurationMillis;
     private List<ExecutionHotspot> executionHotspots;
 
+    // Deep Dive Data
+    private List<RunSummary> recentRuns;
+    private List<String> driftReasons;
+    private List<ScenarioDriftImpact> topRegressors;
+
+    @Data
+    @Builder
+    public static class ScenarioDriftImpact {
+        private String scenarioName;
+        private String featureFile;
+        private double previousPassRate;
+        private double recentPassRate;
+        private double delta;
+    }
+
+
     @Data
     @Builder
     public static class FragileScenario {
@@ -73,5 +89,16 @@ public class AnalyticsDTO {
     public static class GherkinItem {
         private String name;
         private String featureFile;
+    }
+
+    @Data
+    @Builder
+    public static class RunSummary {
+        private Integer runId;
+        private long passedCount;
+        private long failedCount;
+        private long skippedCount;
+        private String url;
+        private java.time.LocalDateTime timestamp;
     }
 }

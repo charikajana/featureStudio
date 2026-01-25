@@ -17,6 +17,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ public class ProjectAnalyticsService {
 
     private final ScenarioResultRepository scenarioResultRepository;
     private final TestStatsService testStatsService;
+    private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final com.editor.backend.repository.ScenarioConfigurationRepository configurationRepository;
 
     public com.editor.backend.repository.ScenarioConfigurationRepository getConfigurationRepository() {
@@ -53,6 +55,14 @@ public class ProjectAnalyticsService {
 
         StepReuseData reuseData = calculateStepReuse(repoPath, branch);
 
+        // Fetch repo config for URL generation
+        var repos = gitRepoRepository.findAllByRepositoryUrl(normalizedUrl);
+        String org = !repos.isEmpty() ? repos.get(0).getAzureOrg() : null;
+        String project = !repos.isEmpty() ? repos.get(0).getAzureProject() : null;
+
+        double drift = calculateStabilityDrift(allResults);
+        DriftAnalysisResult driftAnalysis = calculateDriftAnalytics(allResults);
+        
         return AnalyticsDTO.builder()
                 .topFragileScenarios(calculateFragility(allResults))
                 .totalFeatures(reuseData.getFeatureCount())
@@ -65,12 +75,128 @@ public class ProjectAnalyticsService {
                 .overallStepReuseROI(reuseData.getOverallROI())
                 .topUtilizedSteps(reuseData.getTopSteps())
                 .allSteps(reuseData.getAllSteps())
-                .stabilityDrift(calculateStabilityDrift(allResults))
-                .driftStatus(determineDriftStatus(calculateStabilityDrift(allResults)))
+                .stabilityDrift(drift)
+                .driftStatus(determineDriftStatus(drift))
                 .globalAverageDurationMillis(calculateGlobalAverage(scenarioResultRepository.findByRepoUrl(normalizedUrl)))
                 .executionHotspots(calculateExecutionHotspots(normalizedUrl, scenarioResultRepository.findByRepoUrl(normalizedUrl)))
+                .recentRuns(calculateRecentRuns(allResults, org, project))
+                .driftReasons(driftAnalysis.getReasons())
+                .topRegressors(driftAnalysis.getRegressors())
                 .build();
     }
+
+    private List<AnalyticsDTO.RunSummary> calculateRecentRuns(List<ScenarioResult> results, String org, String project) {
+        return results.stream()
+                .filter(r -> r.getRunId() != null)
+                .collect(Collectors.groupingBy(ScenarioResult::getRunId))
+                .entrySet().stream()
+                .map(entry -> {
+                    List<ScenarioResult> runResults = entry.getValue();
+                    String url = (org != null && project != null) ? 
+                        String.format("https://dev.azure.com/%s/%s/_build/results?buildId=%d&view=ms.vss-test-web.build-test-results-tab", org, project, entry.getKey()) : null;
+
+                    return AnalyticsDTO.RunSummary.builder()
+                            .runId(entry.getKey())
+                            .passedCount(runResults.stream().filter(r -> "Succeeded".equalsIgnoreCase(r.getStatus()) || "Passed".equalsIgnoreCase(r.getStatus())).count())
+                            .failedCount(runResults.stream().filter(r -> "Failed".equalsIgnoreCase(r.getStatus())).count())
+                            .skippedCount(runResults.stream().filter(r -> "Skipped".equalsIgnoreCase(r.getStatus())).count())
+                            .url(url)
+                            .timestamp(runResults.stream().map(ScenarioResult::getTimestamp).max(LocalDateTime::compareTo).orElse(LocalDateTime.now()))
+                            .build();
+                })
+                .sorted(Comparator.comparing(AnalyticsDTO.RunSummary::getTimestamp).reversed())
+                .limit(10)
+                .collect(Collectors.toList());
+    }
+
+    @Data
+    @Builder
+    private static class DriftAnalysisResult {
+        private List<String> reasons;
+        private List<AnalyticsDTO.ScenarioDriftImpact> regressors;
+    }
+
+    private DriftAnalysisResult calculateDriftAnalytics(List<ScenarioResult> results) {
+        if (results.size() < 10) {
+            return DriftAnalysisResult.builder()
+                    .reasons(Collections.singletonList("Insufficient data to analyze drift reasons."))
+                    .regressors(Collections.emptyList())
+                    .build();
+        }
+
+        List<ScenarioResult> sorted = results.stream()
+                .sorted(Comparator.comparing(ScenarioResult::getTimestamp).reversed())
+                .collect(Collectors.toList());
+
+        List<ScenarioResult> recent = sorted.stream().limit(Math.min(20, sorted.size())).collect(Collectors.toList());
+        List<ScenarioResult> older = sorted.stream().skip(recent.size()).collect(Collectors.toList());
+
+        if (older.isEmpty()) {
+            return DriftAnalysisResult.builder()
+                    .reasons(Collections.singletonList("Establishing baseline. No historical data yet."))
+                    .regressors(Collections.emptyList())
+                    .build();
+        }
+
+        Map<String, Double> recentStats = recent.stream()
+                .collect(Collectors.groupingBy(r -> r.getFeatureFile() + "|" + r.getScenarioName(),
+                        Collectors.averagingDouble(r -> ("Succeeded".equalsIgnoreCase(r.getStatus()) || "Passed".equalsIgnoreCase(r.getStatus())) ? 1.0 : 0.0)));
+
+        Map<String, Double> olderStats = older.stream()
+                .collect(Collectors.groupingBy(r -> r.getFeatureFile() + "|" + r.getScenarioName(),
+                        Collectors.averagingDouble(r -> ("Succeeded".equalsIgnoreCase(r.getStatus()) || "Passed".equalsIgnoreCase(r.getStatus())) ? 1.0 : 0.0)));
+
+        List<String> reasons = new ArrayList<>();
+        List<AnalyticsDTO.ScenarioDriftImpact> regressors = new ArrayList<>();
+
+        olderStats.forEach((key, olderRate) -> {
+            Double recentRate = recentStats.get(key);
+            if (recentRate != null) {
+                String[] parts = key.split("\\|");
+                String featureFile = parts[0];
+                String scenarioName = parts[1];
+                double delta = (recentRate - olderRate);
+
+                if (delta < -0.05) { // Any drop > 5% is a regressor
+                    regressors.add(AnalyticsDTO.ScenarioDriftImpact.builder()
+                            .featureFile(featureFile)
+                            .scenarioName(scenarioName)
+                            .previousPassRate(Math.round(olderRate * 1000) / 10.0)
+                            .recentPassRate(Math.round(recentRate * 1000) / 10.0)
+                            .delta(Math.round(delta * 1000) / 10.0)
+                            .build());
+                }
+
+                if (delta < -0.2) {
+                    reasons.add("Regression detected in scenario: " + scenarioName + " (Pass rate dropped from " + Math.round(olderRate * 100) + "% to " + Math.round(recentRate * 100) + "%)");
+                } else if (delta > 0.2) {
+                    reasons.add("Improvement detected in scenario: " + scenarioName + " (Pass rate increased from " + Math.round(olderRate * 100) + "% to " + Math.round(recentRate * 100) + "%)");
+                }
+            }
+        });
+
+        // Find new failures
+        recentStats.forEach((key, recentRate) -> {
+            if (!olderStats.containsKey(key) && recentRate < 0.8) {
+                String scenarioName = key.split("\\|")[1];
+                reasons.add("New unstable scenario introduced: " + scenarioName + " (Initial pass rate: " + Math.round(recentRate * 100) + "%)");
+            }
+        });
+
+        if (reasons.isEmpty()) {
+            reasons.add("General stability is " + determineDriftStatus(calculateStabilityDrift(results)).toLowerCase() + " across all scenarios.");
+        }
+
+        return DriftAnalysisResult.builder()
+                .reasons(reasons.stream().limit(5).collect(Collectors.toList()))
+                .regressors(regressors.stream()
+                        .sorted(Comparator.comparingDouble(AnalyticsDTO.ScenarioDriftImpact::getDelta))
+                        .limit(10)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+
 
     private List<AnalyticsDTO.FragileScenario> calculateFragility(List<ScenarioResult> results) {
         Map<String, List<ScenarioResult>> grouped = results.stream()
