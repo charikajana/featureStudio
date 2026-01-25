@@ -34,6 +34,49 @@ public class AnalyticsDTO {
     private List<RunSummary> recentRuns;
     private List<String> driftReasons;
     private List<ScenarioDriftImpact> topRegressors;
+    
+    // Engineering Intelligence
+    private List<PerformanceAnomaly> performanceAnomalies;
+    private List<StabilitySignificance> stabilitySignificance;
+    private List<ParetoStep> paretoEfficiency;
+    private List<BayesianRisk> predictiveRisk;
+
+    @Data
+    @Builder
+    public static class PerformanceAnomaly {
+        private String scenarioName;
+        private double averageDurationMillis;
+        private double standardDeviation;
+        private double zScore;
+        private String featureFile;
+    }
+
+    @Data
+    @Builder
+    public static class StabilitySignificance {
+        private String scenarioName;
+        private double pValue;
+        private boolean isSignificant; // Does this drop in stability matter?
+        private double stabilityChange;
+    }
+
+    @Data
+    @Builder
+    public static class ParetoStep {
+        private String stepText;
+        private int usageCount;
+        private double cumulativePercentage;
+        private boolean isInTop20;
+    }
+
+    @Data
+    @Builder
+    public static class BayesianRisk {
+        private String scenarioName;
+        private double failureProbability; // 0.0 - 1.0
+        private String riskLevel; // High, Medium, Low
+        private String featureFile;
+    }
 
     @Data
     @Builder

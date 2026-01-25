@@ -19,6 +19,7 @@ import { WorkspaceView } from './components/WorkspaceView';
 import { EditorLayout } from './components/EditorLayout';
 import { AppModals } from './components/AppModals';
 import { AdvancedAnalyticsView } from './components/AdvancedAnalyticsView';
+import { EngineeringInsightsView } from './components/EngineeringInsightsView';
 
 const MIN_SIDEBAR_WIDTH = 250;
 const MAX_SIDEBAR_WIDTH = 600;
@@ -172,6 +173,15 @@ function App() {
                 repoUrl={repoUrl}
                 branch={currentBranch}
                 onBack={() => setActiveView('editor')}
+                onSync={handleSync}
+              />
+            </Box>
+          ) : activeView === 'engineering-insights' ? (
+            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+              <EngineeringInsightsView
+                repoUrl={repoUrl}
+                branch={currentBranch}
+                onBack={() => setActiveView('analytics')}
                 onSync={handleSync}
               />
             </Box>

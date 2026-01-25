@@ -12,12 +12,13 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import ScienceIcon from '@mui/icons-material/Science';
 
 
 interface SidebarProps {
     username: string | null;
-    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics';
-    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics') => void;
+    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights';
+    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights') => void;
     onSettingsOpen: () => void;
     onLogout: () => void;
     onRun: () => void;
@@ -28,7 +29,7 @@ interface SidebarItem {
     icon: any;
     title: string;
     type: 'nav' | 'action' | 'divider' | 'special';
-    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics';
+    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights';
     action?: string;
     danger?: boolean;
 }
@@ -100,10 +101,10 @@ export const Sidebar: FC<SidebarProps> = ({
     const defaultOrder: SidebarItem[] = [
         { id: 'editor', icon: EditNoteIcon, title: 'Editor', type: 'nav', view: 'editor' },
         { id: 'project-setup', icon: FolderSpecialIcon, title: 'Project Management', type: 'nav', view: 'project-setup' },
-        { id: 'divider-1', icon: null, title: '', type: 'divider' },
         { id: 'stats', icon: CheckCircleIcon, title: 'Tests Dashboard', type: 'nav', view: 'stats' },
         { id: 'pipeline', icon: MonitorHeartIcon, title: 'Pipeline Monitor', type: 'nav', view: 'pipeline' },
         { id: 'analytics', icon: AssessmentIcon, title: 'Analytics Hub', type: 'nav', view: 'analytics' },
+        { id: 'engineering-insights', icon: ScienceIcon, title: 'Engineering Intelligence', type: 'nav', view: 'engineering-insights' },
         { id: 'run', icon: PlayArrowIcon, title: 'Run Pipeline', type: 'action', action: 'run' },
         { id: 'suites', icon: LayersIcon, title: 'Suites', type: 'nav' },
     ];
@@ -113,11 +114,12 @@ export const Sidebar: FC<SidebarProps> = ({
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                // Map icons back and ensure NEW items added to defaultOrder are included
-                const existingItems = parsed.map((p: any) => ({
-                    ...p,
-                    icon: defaultOrder.find(d => d.id === p.id)?.icon || HelpOutlineIcon
-                }));
+                const existingItems = parsed
+                    .filter((p: any) => defaultOrder.some(d => d.id === p.id))
+                    .map((p: any) => ({
+                        ...p,
+                        icon: defaultOrder.find(d => d.id === p.id)?.icon
+                    }));
 
                 // Add any items in defaultOrder that aren't in the saved list (new features)
                 const newItems = defaultOrder.filter(d => !parsed.some((p: any) => p.id === d.id));

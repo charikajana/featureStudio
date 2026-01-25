@@ -19,7 +19,7 @@ export const useAppLogic = () => {
     const [sidebarWidth, setSidebarWidth] = useState(300);
     const [isResizing, setIsResizing] = useState(false);
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-    const [activeView, setActiveView] = useState<'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics'>('editor');
+    const [activeView, setActiveView] = useState<'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights'>('editor');
     const [stabilityFilter, setStabilityFilter] = useState<'all' | 'flaky'>('all');
     const [runModalOpen, setRunModalOpen] = useState(false);
     const [reposLoaded, setReposLoaded] = useState(false);

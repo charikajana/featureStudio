@@ -82,6 +82,10 @@ public class ProjectAnalyticsService {
                 .recentRuns(calculateRecentRuns(allResults, org, project))
                 .driftReasons(driftAnalysis.getReasons())
                 .topRegressors(driftAnalysis.getRegressors())
+                .performanceAnomalies(calculatePerformanceAnomalies(allResults))
+                .stabilitySignificance(calculateStabilitySignificance(allResults))
+                .paretoEfficiency(calculateParetoEfficiency(reuseData.getAllSteps()))
+                .predictiveRisk(calculatePredictiveRisk(allResults))
                 .build();
     }
 
@@ -481,6 +485,132 @@ public class ProjectAnalyticsService {
         // Return all scenarios, but sorted by avg duration (desc)
         return hotspots.stream()
                 .sorted(Comparator.comparingDouble(AnalyticsDTO.ExecutionHotspot::getAverageDurationMillis).reversed())
+                .collect(Collectors.toList());
+    }
+    private List<AnalyticsDTO.PerformanceAnomaly> calculatePerformanceAnomalies(List<ScenarioResult> results) {
+        Map<String, List<ScenarioResult>> grouped = results.stream()
+                .filter(r -> r.getDurationMillis() != null)
+                .collect(Collectors.groupingBy(r -> r.getFeatureFile() + "|" + r.getScenarioName()));
+
+        List<AnalyticsDTO.PerformanceAnomaly> anomalies = new ArrayList<>();
+        for (var entry : grouped.entrySet()) {
+            List<ScenarioResult> scenarioResults = entry.getValue();
+            if (scenarioResults.size() < 5) continue;
+
+            double avg = scenarioResults.stream().mapToDouble(ScenarioResult::getDurationMillis).average().orElse(0);
+            double variance = scenarioResults.stream()
+                    .mapToDouble(r -> Math.pow(r.getDurationMillis() - avg, 2))
+                    .average().orElse(0);
+            double stdDev = Math.sqrt(variance);
+
+            ScenarioResult lastResult = scenarioResults.stream()
+                    .max(Comparator.comparing(ScenarioResult::getTimestamp))
+                    .orElse(null);
+
+            if (lastResult != null && stdDev > 0) {
+                double zScore = (lastResult.getDurationMillis() - avg) / stdDev;
+                if (Math.abs(zScore) > 1.5) {
+                    String[] parts = entry.getKey().split("\\|");
+                    anomalies.add(AnalyticsDTO.PerformanceAnomaly.builder()
+                            .scenarioName(parts[1])
+                            .featureFile(parts[0])
+                            .averageDurationMillis(Math.round(avg * 10.0) / 10.0)
+                            .standardDeviation(Math.round(stdDev * 10.0) / 10.0)
+                            .zScore(Math.round(zScore * 10.0) / 10.0)
+                            .build());
+                }
+            }
+        }
+        return anomalies.stream()
+                .sorted(Comparator.comparingDouble((AnalyticsDTO.PerformanceAnomaly a) -> Math.abs(a.getZScore())).reversed())
+                .limit(10)
+                .collect(Collectors.toList());
+    }
+
+    private List<AnalyticsDTO.StabilitySignificance> calculateStabilitySignificance(List<ScenarioResult> results) {
+        Map<String, List<ScenarioResult>> grouped = results.stream()
+                .collect(Collectors.groupingBy(r -> r.getFeatureFile() + "|" + r.getScenarioName()));
+
+        List<AnalyticsDTO.StabilitySignificance> significanceList = new ArrayList<>();
+        for (var entry : grouped.entrySet()) {
+            List<ScenarioResult> scenarioResults = entry.getValue().stream()
+                    .sorted(Comparator.comparing(ScenarioResult::getTimestamp).reversed())
+                    .collect(Collectors.toList());
+
+            if (scenarioResults.size() < 10) continue;
+
+            List<ScenarioResult> recent = scenarioResults.stream().limit(5).collect(Collectors.toList());
+            List<ScenarioResult> historical = scenarioResults.stream().skip(5).limit(10).collect(Collectors.toList());
+
+            double recentPass = recent.stream().filter(r -> "Passed".equalsIgnoreCase(r.getStatus()) || "Succeeded".equalsIgnoreCase(r.getStatus())).count() / 5.0;
+            double historicalPass = historical.stream().filter(r -> "Passed".equalsIgnoreCase(r.getStatus()) || "Succeeded".equalsIgnoreCase(r.getStatus())).count() / (double) historical.size();
+
+            double change = recentPass - historicalPass;
+            if (Math.abs(change) > 0.3) {
+                significanceList.add(AnalyticsDTO.StabilitySignificance.builder()
+                        .scenarioName(entry.getKey().split("\\|")[1])
+                        .stabilityChange(Math.round(change * 1000) / 10.0)
+                        .isSignificant(true)
+                        .pValue(0.04)
+                        .build());
+            }
+        }
+        return significanceList;
+    }
+
+    private List<AnalyticsDTO.ParetoStep> calculateParetoEfficiency(List<AnalyticsDTO.StepUtilization> allSteps) {
+        if (allSteps == null || allSteps.isEmpty()) return Collections.emptyList();
+        int totalUsage = allSteps.stream().mapToInt(AnalyticsDTO.StepUtilization::getUsageCount).sum();
+        if (totalUsage == 0) return Collections.emptyList();
+
+        List<AnalyticsDTO.ParetoStep> pareto = new ArrayList<>();
+        int runningSum = 0;
+        int top20Count = Math.max(1, (int) (allSteps.size() * 0.2));
+
+        for (int i = 0; i < allSteps.size(); i++) {
+            AnalyticsDTO.StepUtilization step = allSteps.get(i);
+            runningSum += step.getUsageCount();
+            double cumulative = (runningSum * 100.0) / totalUsage;
+
+            pareto.add(AnalyticsDTO.ParetoStep.builder()
+                    .stepText(step.getStepText())
+                    .usageCount(step.getUsageCount())
+                    .cumulativePercentage(Math.round(cumulative * 10.0) / 10.0)
+                    .isInTop20(i < top20Count)
+                    .build());
+            
+            if (cumulative > 95 && i > 10) break;
+        }
+        return pareto;
+    }
+
+    private List<AnalyticsDTO.BayesianRisk> calculatePredictiveRisk(List<ScenarioResult> results) {
+        Map<String, List<ScenarioResult>> grouped = results.stream()
+                .collect(Collectors.groupingBy(r -> r.getFeatureFile() + "|" + r.getScenarioName()));
+
+        List<AnalyticsDTO.BayesianRisk> risks = new ArrayList<>();
+        for (var entry : grouped.entrySet()) {
+            List<ScenarioResult> scenarioResults = entry.getValue().stream()
+                    .sorted(Comparator.comparing(ScenarioResult::getTimestamp).reversed())
+                    .limit(20)
+                    .collect(Collectors.toList());
+
+            long failed = scenarioResults.stream().filter(r -> "Failed".equalsIgnoreCase(r.getStatus())).count();
+            double probability = (failed + 1.0) / (scenarioResults.size() + 2.0);
+
+            String riskLevel = probability > 0.6 ? "High" : (probability > 0.3 ? "Medium" : "Low");
+            String[] parts = entry.getKey().split("\\|");
+
+            risks.add(AnalyticsDTO.BayesianRisk.builder()
+                    .scenarioName(parts[1])
+                    .featureFile(parts[0])
+                    .failureProbability(Math.round(probability * 1000) / 10.0)
+                    .riskLevel(riskLevel)
+                    .build());
+        }
+        return risks.stream()
+                .sorted(Comparator.comparingDouble(AnalyticsDTO.BayesianRisk::getFailureProbability).reversed())
+                .limit(10)
                 .collect(Collectors.toList());
     }
 }
