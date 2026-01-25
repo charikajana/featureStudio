@@ -112,11 +112,6 @@ public class StabilityService {
                 .sorted(Comparator.comparing(StabilityStats.ScenarioStability::getStabilityScore))
                 .collect(Collectors.toList());
 
-        // Calculate Overall Stability Score
-        double overallScore = scenarioMetrics.stream()
-                .mapToDouble(StabilityStats.ScenarioStability::getStabilityScore)
-                .average()
-                .orElse(0.0);
 
         // Calculate Execution History (Trend)
         Map<Integer, List<ScenarioResult>> runGroups = results.stream()
@@ -126,8 +121,8 @@ public class StabilityService {
         List<Integer> sortedRunIds = runGroups.keySet().stream().sorted().collect(Collectors.toList());
         List<StabilityStats.BuildMetric> history = new ArrayList<>();
         
-        // Take last 15 builds to show a meaningful trend
-        int window = Math.max(0, sortedRunIds.size() - 15);
+        // Take last 10 builds to show a meaningful trend (aligned with Analytics Hub)
+        int window = Math.max(0, sortedRunIds.size() - 10);
         for (int i = window; i < sortedRunIds.size(); i++) {
             Integer rId = sortedRunIds.get(i);
             List<ScenarioResult> rResults = runGroups.get(rId);
@@ -147,6 +142,10 @@ public class StabilityService {
                     .passRate(Math.round(passRate * 10.0) / 10.0)
                     .build());
         }
+        double overallScore = history.isEmpty() ? 0.0 : history.stream()
+                .mapToDouble(StabilityStats.BuildMetric::getPassRate)
+                .average()
+                .orElse(0.0);
 
         return StabilityStats.builder()
                 .detectedBranch(actualBranch)

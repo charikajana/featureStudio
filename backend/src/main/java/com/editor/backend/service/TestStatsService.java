@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ public class TestStatsService {
     private final PipelineService pipelineService;
     private final com.editor.backend.repository.TestCaseTrendRepository trendRepository;
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
+    private final com.editor.backend.repository.ScenarioResultRepository scenarioResultRepository;
 
     @Cacheable(value = "testStats", key = "{#username, #repoUrl, #branch}")
     public TestStats calculateStats(String username, String repoUrl, String repoPath, String branch) {
@@ -55,7 +58,15 @@ public class TestStatsService {
                     stats.setTestsPassed((int) latestRun.getOrDefault("testsPassed", 0));
                     stats.setTestsFailed((int) latestRun.getOrDefault("testsFailed", 0));
                     stats.setTestsTotal((int) latestRun.getOrDefault("testsTotal", 0));
-                    stats.setPassRate(stats.getTestsTotal() > 0 ? (stats.getTestsPassed() * 100.0 / stats.getTestsTotal()) : 0);
+                    
+                    // ALIGNMENT: Instead of just the latest run's pass rate, use the historical average stability
+                    // this ensures consistency with the Analytics Hub view
+                    double historicalStability = calculateAverageStability(repoUrl, branch);
+                    if (historicalStability > 0) {
+                        stats.setPassRate(historicalStability);
+                    } else {
+                        stats.setPassRate(stats.getTestsTotal() > 0 ? (stats.getTestsPassed() * 100.0 / stats.getTestsTotal()) : 0);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -231,5 +242,45 @@ public class TestStatsService {
             }
         }
         return scenarioCount;
+    }
+
+    private double calculateAverageStability(String repoUrl, String branch) {
+        String normalizedUrl = repoUrl.trim();
+        if (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
+        normalizedUrl = normalizedUrl.toLowerCase();
+
+        List<com.editor.backend.model.ScenarioResult> results = scenarioResultRepository.findByRepoUrl(normalizedUrl);
+        if (branch != null && !branch.isEmpty()) {
+            results = results.stream().filter(r -> branch.equals(r.getBranch())).collect(java.util.stream.Collectors.toList());
+        }
+
+        if (results.isEmpty()) return 0;
+
+        // Group by Run ID and calculate pass rate for each run
+        Map<Integer, List<com.editor.backend.model.ScenarioResult>> groupedByRun = results.stream()
+                .filter(r -> r.getRunId() != null)
+                .collect(java.util.stream.Collectors.groupingBy(com.editor.backend.model.ScenarioResult::getRunId));
+
+        if (groupedByRun.isEmpty()) return 0;
+
+        return groupedByRun.entrySet().stream()
+                .sorted(Map.Entry.<Integer, List<com.editor.backend.model.ScenarioResult>>comparingByKey().reversed())
+                .limit(10)
+                .mapToDouble(entry -> {
+                    List<com.editor.backend.model.ScenarioResult> runResults = entry.getValue();
+                    // DEDUP: Only latest result per scenario in run
+                    Map<String, com.editor.backend.model.ScenarioResult> unique = new HashMap<>();
+                    for (var r : runResults) {
+                        String key = r.getFeatureFile() + "|" + r.getScenarioName();
+                        if (!unique.containsKey(key) || r.getTimestamp().isAfter(unique.get(key).getTimestamp())) {
+                            unique.put(key, r);
+                        }
+                    }
+                    if (unique.isEmpty()) return 0.0;
+                    long passed = unique.values().stream().filter(r -> "Passed".equalsIgnoreCase(r.getStatus()) || "Succeeded".equalsIgnoreCase(r.getStatus())).count();
+                    return (passed * 100.0) / unique.size();
+                })
+                .average()
+                .orElse(0.0);
     }
 }
