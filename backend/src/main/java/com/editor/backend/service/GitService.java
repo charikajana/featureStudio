@@ -20,6 +20,12 @@ import java.util.List;
 @Slf4j
 public class GitService {
 
+    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    private String azureBaseUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.github.base-url}")
+    private String githubBaseUrl;
+
     public void cloneRepository(String repoUrl, String pat, String localPath) throws GitAPIException {
         String sanitizedUrl = sanitizeRepoUrl(repoUrl);
         log.info("Cloning repository {} to {}", sanitizedUrl, localPath);
@@ -118,7 +124,7 @@ public class GitService {
             
             // 3. Ensure Remote URL is authenticated if needed
             String currentUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
-            boolean isAzure = currentUrl != null && (currentUrl.contains("dev.azure.com") || currentUrl.contains("visualstudio.com"));
+            boolean isAzure = currentUrl != null && (currentUrl.contains("dev.azure.com") || currentUrl.contains("visualstudio.com") || (azureBaseUrl != null && currentUrl.contains(azureBaseUrl.replace("https://", ""))));
             
             if (isAzure && currentUrl != null && currentUrl.contains("@")) {
                 log.warn("Detected embedded username in Azure remote URL. This may cause 'not authorized' errors. Recommendation: Use a clean URL without '@'.");
@@ -365,7 +371,7 @@ public class GitService {
     }
 
     private UsernamePasswordCredentialsProvider getCredentialsProvider(String url, String pat) {
-        boolean isAzure = url != null && (url.contains("dev.azure.com") || url.contains("visualstudio.com"));
+        boolean isAzure = url != null && (url.contains("dev.azure.com") || url.contains("visualstudio.com") || (azureBaseUrl != null && url.contains(azureBaseUrl.replace("https://", ""))));
         // For Azure DevOps, an empty username is standard for PATs
         // For GitHub, "token" is often used but empty can also work. 
         // We'll stick to "" for Azure and "token" for others as it's proven.

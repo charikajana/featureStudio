@@ -26,6 +26,12 @@ public class PipelineService {
     private final com.editor.backend.repository.ScenarioResultRepository scenarioResultRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    private String azureBaseUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.api-version}")
+    private String azureApiVersion;
+
     private String normalizeRepoUrl(String url) {
         if (url == null) return null;
         String normalized = url.trim();
@@ -58,8 +64,8 @@ public class PipelineService {
         }
 
         String decryptedPat = encryptionService.decrypt(user.getAzurePat());
-        String url = String.format("https://dev.azure.com/%s/%s/_apis/pipelines/%s/runs?api-version=7.1-preview.1",
-                repo.getAzureOrg(), repo.getAzureProject(), pipelineId);
+        String url = String.format("%s/%s/%s/_apis/pipelines/%s/runs?api-version=%s",
+                azureBaseUrl, repo.getAzureOrg(), repo.getAzureProject(), pipelineId, azureApiVersion);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -198,7 +204,7 @@ public class PipelineService {
         if (userWithPat == null) throw new RuntimeException("No Azure credentials available");
 
         String decryptedPat = encryptionService.decrypt(userWithPat.getAzurePat());
-        String baseUrl = String.format("https://dev.azure.com/%s/%s/_apis", repo.getAzureOrg(), repo.getAzureProject());
+        String baseUrl = String.format("%s/%s/%s/_apis", azureBaseUrl, repo.getAzureOrg(), repo.getAzureProject());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -209,7 +215,7 @@ public class PipelineService {
 
         try {
             // 1. Get Pipeline Run Details
-            String runUrl = baseUrl + "/pipelines/" + repo.getAzurePipelineId() + "/runs/" + runId + "?api-version=7.1-preview.1";
+            String runUrl = baseUrl + "/pipelines/" + repo.getAzurePipelineId() + "/runs/" + runId + "?api-version=" + azureApiVersion;
             ResponseEntity<Map> runResponse = restTemplate.exchange(runUrl, org.springframework.http.HttpMethod.GET, entity, Map.class);
             Map<String, Object> runData = runResponse.getBody();
 
@@ -446,8 +452,8 @@ public class PipelineService {
 
         // Use the PAT from the user who has it configured (not necessarily the current user)
         String decryptedPat = encryptionService.decrypt(userWithPat.getAzurePat());
-        String url = String.format("https://dev.azure.com/%s/%s/_apis/pipelines/%s/runs?api-version=7.1-preview.1&$top=%d",
-                repo.getAzureOrg(), repo.getAzureProject(), pipelineId, fetchLimit);
+        String url = String.format("%s/%s/%s/_apis/pipelines/%s/runs?api-version=%s&$top=%d",
+                azureBaseUrl, repo.getAzureOrg(), repo.getAzureProject(), pipelineId, azureApiVersion, fetchLimit);
 
         log.info("User '{}' is viewing pipeline history for '{}' (using shared credentials)", username, repoUrl);
 
@@ -481,7 +487,8 @@ public class PipelineService {
                     
                     // Construct dynamic test results URL
                     String customUrl = String.format(
-                        "https://dev.azure.com/%s/%s/_build/results?buildId=%s&view=ms.vss-test-web.build-test-results-tab",
+                        "%s/%s/%s/_build/results?buildId=%s&view=ms.vss-test-web.build-test-results-tab",
+                        azureBaseUrl, 
                         repo.getAzureOrg(), 
                         repo.getAzureProject(), 
                         run.get("id")
@@ -528,8 +535,8 @@ public class PipelineService {
                     if (runId != null && "completed".equals(run.get("state"))) {
                         try {
                             String testRunsUrl = String.format(
-                                "https://dev.azure.com/%s/%s/_apis/test/runs?buildUri=vstfs:///Build/Build/%d&api-version=7.1",
-                                repo.getAzureOrg(), repo.getAzureProject(), runId
+                                "%s/%s/%s/_apis/test/runs?buildUri=vstfs:///Build/Build/%d&api-version=7.1",
+                                azureBaseUrl, repo.getAzureOrg(), repo.getAzureProject(), runId
                             );
                             
                             ResponseEntity<Map> testRunsResponse = restTemplate.exchange(

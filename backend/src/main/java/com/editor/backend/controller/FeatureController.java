@@ -34,6 +34,12 @@ public class FeatureController {
     private final UserRepository userRepository;
     private final ProjectAnalyticsService analyticsService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    private String azureBaseUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.github.base-url}")
+    private String githubBaseUrl;
+
     @GetMapping("/suggestions")
     public ResponseEntity<java.util.Set<String>> getSuggestions(@RequestHeader("X-Username") String username,
                                                                  @RequestParam String repoUrl) {
@@ -196,11 +202,14 @@ public class FeatureController {
             
             String selectedTokenEncrypted = gitRepo.getPersonalAccessToken();
             // Favor the latest global tokens if they are available
-            if (repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")) {
+            boolean isAzure = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com") || (azureBaseUrl != null && repoUrl.contains(azureBaseUrl.replace("https://", "")));
+            boolean isGithub = repoUrl.contains("github.com") || (githubBaseUrl != null && repoUrl.contains(githubBaseUrl.replace("https://", "")));
+
+            if (isAzure) {
                 if (user.getAzurePat() != null && !user.getAzurePat().isEmpty()) {
                     selectedTokenEncrypted = user.getAzurePat();
                 }
-            } else if (repoUrl.contains("github.com")) {
+            } else if (isGithub) {
                 if (user.getGithubToken() != null && !user.getGithubToken().isEmpty()) {
                     selectedTokenEncrypted = user.getGithubToken();
                 }

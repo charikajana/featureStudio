@@ -32,6 +32,9 @@ public class AuthController {
     private final EncryptionService encryptionService;
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @org.springframework.beans.factory.annotation.Value("${app.github.api-url}")
+    private String githubApiUrl;
+
     @PostMapping("/check-email")
     public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -147,7 +150,7 @@ public class AuthController {
             headers.set("Authorization", "token " + token);
             HttpEntity<String> entity = new HttpEntity<>(headers);
             
-            restTemplate.exchange("https://api.github.com/user", HttpMethod.GET, entity, Object.class);
+            restTemplate.exchange(githubApiUrl + "/user", HttpMethod.GET, entity, Object.class);
             return true;
         } catch (Exception e) {
             log.warn("Github token validation failed: {}", e.getMessage());

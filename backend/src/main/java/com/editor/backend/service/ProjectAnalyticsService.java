@@ -31,6 +31,9 @@ public class ProjectAnalyticsService {
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final com.editor.backend.repository.ScenarioConfigurationRepository configurationRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    private String azureBaseUrl;
+
     public com.editor.backend.repository.ScenarioConfigurationRepository getConfigurationRepository() {
         return configurationRepository;
     }
@@ -97,7 +100,7 @@ public class ProjectAnalyticsService {
                 .map(entry -> {
                     List<ScenarioResult> runResults = entry.getValue();
                     String url = (org != null && project != null) ? 
-                        String.format("https://dev.azure.com/%s/%s/_build/results?buildId=%d&view=ms.vss-test-web.build-test-results-tab", org, project, entry.getKey()) : null;
+                        String.format("%s/%s/%s/_build/results?buildId=%d&view=ms.vss-test-web.build-test-results-tab", azureBaseUrl, org, project, entry.getKey()) : null;
 
                     // Dedup: For each unique scenario in this build, keep only the latest result (to ignore retries)
                     Map<String, ScenarioResult> uniqueScenarios = new HashMap<>();
