@@ -95,13 +95,30 @@ public class ProjectAnalyticsService {
                     String url = (org != null && project != null) ? 
                         String.format("https://dev.azure.com/%s/%s/_build/results?buildId=%d&view=ms.vss-test-web.build-test-results-tab", org, project, entry.getKey()) : null;
 
+                    // Dedup: For each unique scenario in this build, keep only the latest result (to ignore retries)
+                    Map<String, ScenarioResult> uniqueScenarios = new HashMap<>();
+                    for (ScenarioResult r : runResults) {
+                        String key = r.getFeatureFile() + "|" + r.getScenarioName();
+                        ScenarioResult existing = uniqueScenarios.get(key);
+                        if (existing == null || r.getTimestamp().isAfter(existing.getTimestamp())) {
+                            uniqueScenarios.put(key, r);
+                        }
+                    }
+                    Collection<ScenarioResult> finalResults = uniqueScenarios.values();
+
+                    long passed = finalResults.stream().filter(r -> "Succeeded".equalsIgnoreCase(r.getStatus()) || "Passed".equalsIgnoreCase(r.getStatus())).count();
+                    long total = finalResults.size();
+                    double stability = total > 0 ? (passed * 100.0 / total) : 0;
+
                     return AnalyticsDTO.RunSummary.builder()
                             .runId(entry.getKey())
-                            .passedCount(runResults.stream().filter(r -> "Succeeded".equalsIgnoreCase(r.getStatus()) || "Passed".equalsIgnoreCase(r.getStatus())).count())
-                            .failedCount(runResults.stream().filter(r -> "Failed".equalsIgnoreCase(r.getStatus())).count())
-                            .skippedCount(runResults.stream().filter(r -> "Skipped".equalsIgnoreCase(r.getStatus())).count())
+                            .passedCount(passed)
+                            .failedCount(finalResults.stream().filter(r -> "Failed".equalsIgnoreCase(r.getStatus())).count())
+                            .skippedCount(finalResults.stream().filter(r -> "Skipped".equalsIgnoreCase(r.getStatus())).count())
                             .url(url)
-                            .timestamp(runResults.stream().map(ScenarioResult::getTimestamp).max(LocalDateTime::compareTo).orElse(LocalDateTime.now()))
+                            .totalDurationMillis(finalResults.stream().mapToLong(r -> r.getDurationMillis() != null ? r.getDurationMillis() : 0).sum())
+                            .stabilityScore(Math.round(stability * 10.0) / 10.0)
+                            .timestamp(finalResults.stream().map(ScenarioResult::getTimestamp).max(LocalDateTime::compareTo).orElse(LocalDateTime.now()))
                             .build();
                 })
                 .sorted(Comparator.comparing(AnalyticsDTO.RunSummary::getTimestamp).reversed())
@@ -235,6 +252,14 @@ public class ProjectAnalyticsService {
                         .scenarioName(parts[1])
                         .fragilityScore(Math.round(finalScore * 10.0) / 10.0)
                         .failureCount((int) scenarioResults.stream().filter(r -> "Failed".equalsIgnoreCase(r.getStatus())).count())
+                        .recentHistory(scenarioResults.stream()
+                                .limit(10)
+                                .map(r -> AnalyticsDTO.RunHistory.builder()
+                                        .status(r.getStatus())
+                                        .durationMillis(r.getDurationMillis() != null ? r.getDurationMillis() : 0)
+                                        .timestamp(r.getTimestamp())
+                                        .build())
+                                .collect(Collectors.toList()))
                         .build());
             }
         }

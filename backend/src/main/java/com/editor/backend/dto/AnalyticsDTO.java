@@ -53,7 +53,7 @@ public class AnalyticsDTO {
         private String scenarioName;
         private double fragilityScore; // 0-100
         private int failureCount;
-        private int last10RunsStatus; // Bitmask or summary? Let's use summary
+        private List<RunHistory> recentHistory;
     }
 
     @Data
@@ -99,6 +99,8 @@ public class AnalyticsDTO {
         private long failedCount;
         private long skippedCount;
         private String url;
+        private Long totalDurationMillis;
+        private Double stabilityScore;
         private java.time.LocalDateTime timestamp;
     }
 }
