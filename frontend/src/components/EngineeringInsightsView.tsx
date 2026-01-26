@@ -19,10 +19,8 @@ import {
 import ScienceIcon from '@mui/icons-material/Science';
 import SpeedIcon from '@mui/icons-material/Speed';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
-import LayersIcon from '@mui/icons-material/Layers';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import SyncIcon from '@mui/icons-material/Sync';
-import InfoIcon from '@mui/icons-material/Info';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { featureService } from '../services/api';
 
@@ -31,9 +29,10 @@ interface StatisticalInsightsViewProps {
     branch: string;
     onBack: () => void;
     onSync: () => void;
+    onViewChange: (view: any) => void;
 }
 
-export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = ({ repoUrl, branch, onBack, onSync }) => {
+export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = ({ repoUrl, branch, onBack, onSync, onViewChange }) => {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
 
@@ -96,13 +95,39 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
-                                <SpeedIcon />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 900 }}>Performance Anomalies</Typography>
-                                <Typography variant="caption" sx={{ color: '#64748b' }}>Z-Score outlier detection (σ {'>'} 1.5)</Typography>
-                            </Box>
+                            <Tooltip
+                                arrow
+                                placement="top-start"
+                                title={
+                                    <Box sx={{ p: 1.5 }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>Performance Anomalies (Z-Score)</Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>Goal:</strong> Detect when a step is "unusually" slow, even if it hasn't timed out yet.
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>How it works:</strong> We track the last 20 runs. The Z-Score tells us how many "standard deviations" a run is from the average.
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1, p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}>
+                                            <strong>Example:</strong> Avg: 2.0s, StdDev: 0.2s, Current: 3.5s. <br />
+                                            <strong>Calculation:</strong> (3.5 - 2.0) / 0.2 = <strong>7.5</strong>
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block' }}>
+                                            <strong>Insight:</strong> A Z-Score of 7.5 is massive. Your system flags this because it is statistically impossible for this to happen by chance, suggesting a backend leak or DB lock.
+                                        </Typography>
+                                    </Box>
+                                }
+                                slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', maxWidth: 350, borderRadius: '12px' } } }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
+                                    <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                                        <SpeedIcon />
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 900 }}>Performance Anomalies</Typography>
+                                        <Typography variant="caption" sx={{ color: '#64748b' }}>Z-Score outlier detection (σ {'>'} 1.5)</Typography>
+                                    </Box>
+                                </Box>
+                            </Tooltip>
                         </Box>
 
                         <TableContainer>
@@ -149,13 +174,38 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
-                                <MonitorHeartIcon />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 900 }}>Stability Significance</Typography>
-                                <Typography variant="caption" sx={{ color: '#64748b' }}>Chi-Squared test for reliability drift</Typography>
-                            </Box>
+                            <Tooltip
+                                arrow
+                                placement="top-start"
+                                title={
+                                    <Box sx={{ p: 1.5 }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>Stability Significance (Chi-Squared)</Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>Goal:</strong> Determine if a change in pass rate is a "real bug" or just "normal flakiness."
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>How it works:</strong> Compares Observed results vs. Expected results to see if the difference is "statistically significant."
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>Insight:</strong> If p {"<"} 0.05, there is a 95% chance a code change broke something. If p {">"} 0.05, it's likely just "noise" from the environment.
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, p: 1, bgcolor: 'rgba(34, 197, 94, 0.1)', borderRadius: '4px', color: '#4ade80' }}>
+                                            Actionable: Reduces false-positive alerts by only pinging when the math proves a real trend.
+                                        </Typography>
+                                    </Box>
+                                }
+                                slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', maxWidth: 350, borderRadius: '12px' } } }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
+                                    <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
+                                        <MonitorHeartIcon />
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 900 }}>Stability Significance</Typography>
+                                        <Typography variant="caption" sx={{ color: '#64748b' }}>Chi-Squared test for reliability drift</Typography>
+                                    </Box>
+                                </Box>
+                            </Tooltip>
                         </Box>
 
                         <TableContainer>
@@ -197,111 +247,68 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                     </Paper>
                 </Grid>
 
-                {/* 3. Efficiency Library (Pareto 80/20) */}
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-                                <LayersIcon />
-                            </Box>
-                            <Box sx={{ flexGrow: 1 }}>
-                                <Typography variant="h6" sx={{ fontWeight: 900 }}>Pareto Efficiency</Typography>
-                                <Typography variant="caption" sx={{ color: '#64748b' }}>Identification of "Vital Few" steps</Typography>
-                            </Box>
-                            <Tooltip title="80% of your scenarios are covered by only a few core steps. These are the highest ROI components to optimize.">
-                                <InfoIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
-                            </Tooltip>
-                        </Box>
 
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800 }}>Component Coverage Curve (Cumulative)</Typography>
-                            <Box sx={{ height: 8, width: '100%', bgcolor: '#f1f5f9', borderRadius: 4, mt: 1, overflow: 'hidden', display: 'flex' }}>
-                                <Box sx={{ height: '100%', width: '20%', bgcolor: '#f59e0b' }} />
-                                <Box sx={{ height: '100%', width: '60%', bgcolor: 'rgba(245, 158, 11, 0.4)' }} />
-                                <Box sx={{ height: '100%', width: '20%', bgcolor: 'rgba(245, 158, 11, 0.1)' }} />
-                            </Box>
-                        </Box>
-
-                        <TableContainer sx={{ maxHeight: 300 }}>
-                            <Table size="small" stickyHeader>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 800, bgcolor: 'white', color: '#94a3b8', fontSize: '0.65rem' }}>Core Step</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 800, bgcolor: 'white', color: '#94a3b8', fontSize: '0.65rem' }}>Coverage</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {data?.paretoEfficiency?.map((p: any, i: number) => (
-                                        <TableRow key={i}>
-                                            <TableCell sx={{ py: 1.5 }}>
-                                                <Typography variant="body2" sx={{
-                                                    fontWeight: p.isInTop20 ? 800 : 500,
-                                                    color: p.isInTop20 ? '#0f172a' : '#64748b',
-                                                    fontFamily: 'JetBrains Mono'
-                                                }}>
-                                                    {p.stepText}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Typography variant="body2" sx={{ fontWeight: 900 }}>{p.cumulativePercentage}%</Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Paper>
-                </Grid>
 
                 {/* 4. Risk Forecasting (Bayesian) */}
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-                                <AutoGraphIcon />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 900 }}>Risk Forecasting</Typography>
-                                <Typography variant="caption" sx={{ color: '#64748b' }}>Bayesian Failure Probability (P-Risk)</Typography>
-                            </Box>
+                            <Tooltip
+                                arrow
+                                placement="top-start"
+                                title={
+                                    <Box sx={{ p: 1.5 }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>Predictive Risk (Bayesian Inference)</Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>Goal:</strong> Predict the probability that your next build will fail before you even run it.
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                                            <strong>How it works:</strong> Uses Bayesian prior (past failure rates) and Likelihood (performance under similar conditions) with Laplace Smoothing (+1 correction).
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1, p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}>
+                                            <strong>Laplace Calculation:</strong> (Failures + 1) / (Total Runs + 2)
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block' }}>
+                                            <strong>Actionable:</strong> If probability jumps (e.g., to 60%), the pipeline might block merges or trigger stability scripts.
+                                        </Typography>
+                                    </Box>
+                                }
+                                slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', maxWidth: 350, borderRadius: '12px' } } }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
+                                    <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                                        <AutoGraphIcon />
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 900 }}>Risk Forecasting</Typography>
+                                        <Typography variant="caption" sx={{ color: '#64748b' }}>Bayesian Failure Probability (P-Risk)</Typography>
+                                    </Box>
+                                </Box>
+                            </Tooltip>
                         </Box>
 
-                        <TableContainer>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 800, borderBottom: '2px solid #f1f5f9', color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Target Scenario</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 800, borderBottom: '2px solid #f1f5f9', color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>Failure Likelihood</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {data?.predictiveRisk?.map((r: any, i: number) => (
-                                        <TableRow key={i}>
-                                            <TableCell sx={{ py: 1.5 }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.scenarioName}</Typography>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
-                                                    <Typography variant="body2" sx={{
-                                                        fontWeight: 900,
-                                                        color: r.riskLevel === 'High' ? '#ef4444' : (r.riskLevel === 'Medium' ? '#f59e0b' : '#22c55e')
-                                                    }}>
-                                                        {r.failureProbability}%
-                                                    </Typography>
-                                                    <Box sx={{ width: 80, height: 6, bgcolor: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
-                                                        <Box sx={{
-                                                            height: '100%',
-                                                            width: `${r.failureProbability}%`,
-                                                            bgcolor: r.riskLevel === 'High' ? '#ef4444' : (r.riskLevel === 'Medium' ? '#f59e0b' : '#22c55e')
-                                                        }} />
-                                                    </Box>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4, bgcolor: '#fef2f2', borderRadius: '16px', border: '1px dashed #fee2e2' }}>
+                            <AutoGraphIcon sx={{ fontSize: 40, color: '#fca5a5' }} />
+                            <Box sx={{ textAlign: 'center', px: 3 }}>
+                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, mb: 1 }}>
+                                    Predict the probability of failure for your next build using Bayesian Inference modeling.
+                                </Typography>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => onViewChange('risk-forecasting')}
+                                    sx={{
+                                        borderRadius: '10px',
+                                        fontWeight: 800,
+                                        textTransform: 'none',
+                                        borderColor: '#ef4444',
+                                        color: '#ef4444',
+                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.05)', borderColor: '#dc2626' }
+                                    }}
+                                >
+                                    Risk Forecasting Deep Dive
+                                </Button>
+                            </Box>
+                        </Box>
                     </Paper>
                 </Grid>
             </Grid>

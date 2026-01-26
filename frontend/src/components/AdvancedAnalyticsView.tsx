@@ -22,7 +22,6 @@ import { featureService } from '../services/api';
 import { MetricCard } from './analytics/MetricCard';
 import { BuildStabilityTable } from './analytics/BuildStabilityTable';
 import { BuildPerformanceTable } from './analytics/BuildPerformanceTable';
-import { StepUtilizationLibrary } from './analytics/StepUtilizationLibrary';
 import { PerformanceHotspotsDialog } from './analytics/PerformanceHotspotsDialog';
 import { DriftDetailsDialog } from './analytics/DriftDetailsDialog';
 import { FeatureFilesDialog, ScenariosDialog, OutlinesDialog } from './analytics/FeatureAnalysisDialogs';
@@ -33,13 +32,15 @@ interface AdvancedAnalyticsViewProps {
     branch?: string;
     onBack?: () => void;
     onSync?: () => Promise<void>;
+    onViewChange?: (view: any) => void;
 }
 
 export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
     repoUrl,
     branch,
     onBack,
-    onSync
+    onSync,
+    onViewChange
 }) => {
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
@@ -47,7 +48,6 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
     const [data, setData] = useState<any>(null);
 
     // Dialog visibility states
-    const [isStepLibraryOpen, setIsStepLibraryOpen] = useState(false);
     const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
     const [isFeatureFilesOpen, setIsFeatureFilesOpen] = useState(false);
     const [isScenariosOpen, setIsScenariosOpen] = useState(false);
@@ -270,7 +270,14 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                     <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800 }}>ROI SCORE</Typography>
                                     <Typography variant="h6" sx={{ fontWeight: 950, color: '#22c55e', lineHeight: 1 }}>{data.overallStepReuseROI}%</Typography>
                                 </Box>
-                                <Button size="small" variant="contained" onClick={() => setIsStepLibraryOpen(true)} sx={{ borderRadius: '8px', fontWeight: 800, textTransform: 'none', bgcolor: '#3b82f6' }}>Deep Dive</Button>
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={() => onViewChange?.('step-intelligence')}
+                                    sx={{ borderRadius: '8px', fontWeight: 800, textTransform: 'none', bgcolor: '#3b82f6' }}
+                                >
+                                    Deep Dive
+                                </Button>
                             </Box>
                         </Box>
 
@@ -289,12 +296,7 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
             </Box>
 
             {/* Dialogs */}
-            <StepUtilizationLibrary
-                open={isStepLibraryOpen}
-                onClose={() => setIsStepLibraryOpen(false)}
-                steps={data.allSteps}
-                totalScenarios={data.totalScenarios}
-            />
+            {/* StepIntelligenceView replaced StepUtilizationLibrary dialog */}
 
             <PerformanceHotspotsDialog
                 open={isPerformanceOpen}

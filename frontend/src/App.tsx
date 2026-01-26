@@ -20,6 +20,8 @@ import { EditorLayout } from './components/EditorLayout';
 import { AppModals } from './components/AppModals';
 import { AdvancedAnalyticsView } from './components/AdvancedAnalyticsView';
 import { EngineeringInsightsView } from './components/EngineeringInsightsView';
+import { StepIntelligenceView } from './components/StepIntelligenceView';
+import { RiskForecastingView } from './components/RiskForecastingView';
 
 const MIN_SIDEBAR_WIDTH = 250;
 const MAX_SIDEBAR_WIDTH = 600;
@@ -174,6 +176,7 @@ function App() {
                 branch={currentBranch}
                 onBack={() => setActiveView('editor')}
                 onSync={handleSync}
+                onViewChange={setActiveView}
               />
             </Box>
           ) : activeView === 'engineering-insights' ? (
@@ -183,6 +186,23 @@ function App() {
                 branch={currentBranch}
                 onBack={() => setActiveView('analytics')}
                 onSync={handleSync}
+                onViewChange={setActiveView}
+              />
+            </Box>
+          ) : activeView === 'step-intelligence' ? (
+            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+              <StepIntelligenceView
+                repoUrl={repoUrl}
+                branch={currentBranch}
+                onBack={() => setActiveView('analytics')}
+              />
+            </Box>
+          ) : activeView === 'risk-forecasting' ? (
+            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+              <RiskForecastingView
+                repoUrl={repoUrl}
+                branch={currentBranch}
+                onBack={() => setActiveView('engineering-insights')}
               />
             </Box>
           ) : null}

@@ -17,8 +17,8 @@ import ScienceIcon from '@mui/icons-material/Science';
 
 interface SidebarProps {
     username: string | null;
-    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights';
-    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights') => void;
+    activeView: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights' | 'step-intelligence' | 'risk-forecasting';
+    onViewChange: (view: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights' | 'step-intelligence' | 'risk-forecasting') => void;
     onSettingsOpen: () => void;
     onLogout: () => void;
     onRun: () => void;
@@ -29,7 +29,7 @@ interface SidebarItem {
     icon: any;
     title: string;
     type: 'nav' | 'action' | 'divider' | 'special';
-    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights';
+    view?: 'editor' | 'stats' | 'pipeline' | 'project-setup' | 'stability-explorer' | 'analytics' | 'engineering-insights' | 'step-intelligence' | 'risk-forecasting';
     action?: string;
     danger?: boolean;
 }
