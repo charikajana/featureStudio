@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Box, AppBar, Toolbar, Typography, IconButton } from '@mui/material';
+import { Box, AppBar, Toolbar, Typography, IconButton, Tooltip } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -32,6 +32,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
     onCreateBranch
 }) => {
     const isEditor = activeView === 'editor';
+    const isProtectedBranch = ['master', 'main', 'develop'].includes(currentBranch?.toLowerCase());
     return (
         <AppBar
             position="sticky"
@@ -119,24 +120,30 @@ export const AppHeader: FC<AppHeaderProps> = ({
                         <SaveIcon sx={{ fontSize: 20 }} />
                     </IconButton>
 
-                    <IconButton
-                        onClick={onPush}
-                        disabled={!currentRepoName || !isEditor}
-                        title="Push to Azure DevOps"
-                        sx={{
-                            bgcolor: '#6366f1',
-                            color: 'white',
-                            '&:hover': { bgcolor: '#4f46e5', transform: 'translateY(-1px)' },
-                            '&.Mui-disabled': { bgcolor: '#f1f5f9', color: '#cbd5e1' },
-                            borderRadius: '10px',
-                            width: 38,
-                            height: 38,
-                            boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <CloudUploadIcon sx={{ fontSize: 20 }} />
-                    </IconButton>
+                    <Tooltip title={isProtectedBranch ? `Pushing directly to '${currentBranch}' is restricted. Please use a feature branch.` : "Push to Remote"}>
+                        <span>
+                            <IconButton
+                                onClick={onPush}
+                                disabled={!currentRepoName || !isEditor || isProtectedBranch}
+                                sx={{
+                                    bgcolor: isProtectedBranch ? '#f1f5f9' : '#6366f1',
+                                    color: isProtectedBranch ? '#cbd5e1' : 'white',
+                                    '&:hover': {
+                                        bgcolor: isProtectedBranch ? '#f1f5f9' : '#4f46e5',
+                                        transform: isProtectedBranch ? 'none' : 'translateY(-1px)'
+                                    },
+                                    '&.Mui-disabled': { bgcolor: '#f1f5f9', color: '#cbd5e1' },
+                                    borderRadius: '10px',
+                                    width: 38,
+                                    height: 38,
+                                    boxShadow: isProtectedBranch ? 'none' : '0 4px 6px -1px rgba(99, 102, 241, 0.2)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <CloudUploadIcon sx={{ fontSize: 20 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
 
                     <Box sx={{ width: '1px', height: 24, bgcolor: '#f1f5f9', mx: 0.5 }} />
 

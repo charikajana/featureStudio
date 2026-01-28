@@ -31,6 +31,7 @@ public class ProjectAnalyticsService {
     private final TestStatsService testStatsService;
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final com.editor.backend.repository.ScenarioConfigurationRepository configurationRepository;
+    private final GitLockManager gitLockManager;
 
     @Value("${app.azure.devops.base-url}")
     private String azureBaseUrl;
@@ -306,6 +307,7 @@ public class ProjectAnalyticsService {
         int featureCount = 0;
         GherkinCounters counters = new GherkinCounters();
 
+        gitLockManager.lock(repoPath);
         try (Git git = Git.open(new java.io.File(repoPath))) {
             Repository repository = git.getRepository();
             String branchName = (branch == null || branch.isEmpty()) ? repository.getBranch() : branch;
@@ -332,6 +334,8 @@ public class ProjectAnalyticsService {
             }
         } catch (Exception e) {
             log.warn("Failed to calculate real step reuse: {}", e.getMessage());
+        } finally {
+            gitLockManager.unlock(repoPath);
         }
 
         int totalTests = counters.scenarios + counters.outlines;

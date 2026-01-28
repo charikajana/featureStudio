@@ -246,17 +246,35 @@ public class FeatureController {
     }
 
     private Optional<GitRepository> findGitRepo(String username, String repoUrl) {
+        if (repoUrl == null) return Optional.empty();
+        
         String normalizedUrl = repoUrl.trim();
         if (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
         
         Optional<GitRepository> opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
-        if (opt.isEmpty()) {
-            opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
-        }
+        if (opt.isEmpty()) opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
+        
         if (opt.isEmpty()) {
             String alt = normalizedUrl.endsWith(".git") ? normalizedUrl.substring(0, normalizedUrl.length() - 4) : normalizedUrl + ".git";
             opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, alt);
         }
+
+        // Deep search fallback
+        if (opt.isEmpty()) {
+            String repoName = repoUrl;
+            if (repoName.endsWith(".git")) repoName = repoName.substring(0, repoName.length() - 4);
+            if (repoName.contains("/")) repoName = repoName.substring(repoName.lastIndexOf("/") + 1);
+            
+            final String targetName = repoName;
+            java.util.List<GitRepository> userRepos = gitRepoRepository.findByUsername(username);
+            opt = userRepos.stream()
+                .filter(r -> {
+                    String rUrl = r.getRepositoryUrl();
+                    return rUrl != null && rUrl.toLowerCase().contains(targetName.toLowerCase());
+                })
+                .findFirst();
+        }
+        
         return opt;
     }
 }

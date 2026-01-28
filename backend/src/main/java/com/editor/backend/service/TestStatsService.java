@@ -38,6 +38,7 @@ public class TestStatsService {
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final com.editor.backend.repository.ScenarioResultRepository scenarioResultRepository;
     private final WorkspaceService workspaceService;
+    private final GitLockManager gitLockManager;
 
     @Cacheable(value = "testStats", key = "{#username, #repoUrl, #branch}")
     public TestStats calculateStats(String username, String repoUrl, String repoPath, String branch) {
@@ -74,6 +75,7 @@ public class TestStatsService {
             log.warn("Could not fetch execution metrics: {}", e.getMessage());
         }
 
+        gitLockManager.lock(repoPath);
         try (Git git = Git.open(repoDir)) {
             Repository repository = git.getRepository();
             String branchName = (branch == null || branch.isEmpty()) ? repository.getBranch() : branch;
@@ -105,19 +107,14 @@ public class TestStatsService {
             stats.setCoveragePercentage(Math.round(coverage * 10) / 10.0);
 
             // 2. Automation Efficiency (Reuse Index)
-            // Higher unique steps relative to total steps means lower reuse. 
-            // Efficiency = 1 - (unique/total). 100% means perfect reuse.
             if (stats.getTotalSteps() > 0) {
                 double reuse = 1.0 - (uniqueSteps.size() / (double) stats.getTotalSteps());
                 stats.setAutomationEfficiency(Math.round(reuse * 1000) / 10.0);
                 stats.setStepReuseIndex(Math.round((stats.getTotalSteps() / (double) uniqueSteps.size()) * 10) / 10.0);
             }
 
-            // 4. Readiness Score (EXECUTION FOCUSSED)
-            // Go/No-Go based on Execution Results: 70% Execution Result + 20% Coverage + 10% Best Practices
-            double executionScore = stats.getPassRate(); // 0-100
-            
-            // Best Practice Component (Complexity)
+            // 4. Readiness Score
+            double executionScore = stats.getPassRate(); 
             double complexityPoints = 0;
             if (stats.getTotalTests() > 0) {
                 double stepsPerTest = stats.getTotalSteps() / (double) stats.getTotalTests();
@@ -129,18 +126,16 @@ public class TestStatsService {
             if (stats.getTestsTotal() > 0) {
                 readiness = (executionScore * 0.7) + (coverage * 0.2) + (complexityPoints * 0.1);
             } else {
-                // If no execution data, cap score at 40% (Not ready for release)
                 readiness = (coverage * 0.3) + (complexityPoints * 0.1);
             }
-            
             stats.setReadinessScore(Math.min(100, Math.round(readiness)));
-            
-            // 4. Stale Features (Simulated for Demo - in real world check commit dates)
             stats.setStaleFeaturesCount(Math.max(0, stats.getTotalFeatures() / 5)); 
 
             log.info("Stats calculation completed in {}ms. Score: {}", System.currentTimeMillis() - startTime, stats.getReadinessScore());
         } catch (IOException e) {
             log.error("Error calculating advanced stats: {}", e.getMessage());
+        } finally {
+            gitLockManager.unlock(repoPath);
         }
         return stats;
     }
@@ -159,6 +154,13 @@ public class TestStatsService {
             String repoUrl = repo.getRepositoryUrl();
             String username = repo.getUsername();
             String repoPath = workspaceService.getRepoPath(username, repoUrl);
+
+            // For background trending, fail-fast if the user is already doing something 
+            // to avoid blocking the UI thread or causing 'index.lock' issues on Windows.
+            if (!gitLockManager.tryLock(repoPath)) {
+                log.info("Skipping background trend recording for {}: Repository is busy with another operation.", repoUrl);
+                return;
+            }
 
             try (Git git = Git.open(new java.io.File(repoPath))) {
                 Repository jgitRepo = git.getRepository();
@@ -180,6 +182,8 @@ public class TestStatsService {
                 } else {
                     log.warn("No tests found for trend recording in {} on branch {}", repoUrl, branch);
                 }
+            } finally {
+                gitLockManager.unlock(repoPath);
             }
         } catch (Exception e) {
             log.error("Failed to record trend for repo {}: {}", repo.getRepositoryUrl(), e.getMessage());

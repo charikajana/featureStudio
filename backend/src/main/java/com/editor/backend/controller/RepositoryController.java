@@ -34,19 +34,18 @@ public class RepositoryController {
     public ResponseEntity<String> cloneRepository(@RequestHeader("X-Username") String username,
                                                  @RequestBody CloneRepositoryRequest request) {
         try {
-            // Sanitize URL: Remove embedded credentials (e.g., https://user@dev.azure.com -> https://dev.azure.com)
             String rawUrl = request.getRepositoryUrl();
-            String sanitizedUrl = rawUrl;
-            if (rawUrl.contains("@")) {
-                // Keep protocol (https://) but drop everything up to the last @
-                int protocolIndex = rawUrl.indexOf("://");
-                int atIndex = rawUrl.lastIndexOf("@");
+            if (rawUrl == null) return ResponseEntity.badRequest().body("Repository URL is required.");
+            
+            String repoUrl = rawUrl.trim();
+            if (repoUrl.contains("@")) {
+                int protocolIndex = repoUrl.indexOf("://");
+                int atIndex = repoUrl.lastIndexOf("@");
                 if (protocolIndex != -1 && atIndex > protocolIndex) {
-                    sanitizedUrl = rawUrl.substring(0, protocolIndex + 3) + rawUrl.substring(atIndex + 1);
-                    log.info("Sanitized repository URL from {} to {}", rawUrl, sanitizedUrl);
+                    repoUrl = repoUrl.substring(0, protocolIndex + 3) + repoUrl.substring(atIndex + 1);
+                    log.info("Sanitized repository URL for storage: {}", repoUrl);
                 }
             }
-            String repoUrl = request.getRepositoryUrl();
             if (repoUrl.endsWith("/")) repoUrl = repoUrl.substring(0, repoUrl.length() - 1);
             request.setRepositoryUrl(repoUrl);
 
@@ -66,7 +65,12 @@ public class RepositoryController {
                         GitRepository gitRepo = new GitRepository();
                         gitRepo.setUsername(username);
                         gitRepo.setRepositoryUrl(request.getRepositoryUrl());
-                        gitRepo.setPersonalAccessToken(user.getGithubToken());
+                        
+                        // Select correct token based on URL type
+                        String initialToken = gitService.isAzureUrl(request.getRepositoryUrl()) 
+                            ? user.getAzurePat() : user.getGithubToken();
+                        gitRepo.setPersonalAccessToken(initialToken);
+                        
                         gitRepo.setLocalPath(localPath);
                         gitRepo.setAzureOrg(request.getAzureOrg());
                         gitRepo.setAzureProject(request.getAzureProject());
@@ -129,7 +133,11 @@ public class RepositoryController {
             return ResponseEntity.ok("Repository reset/undo successful");
         } catch (Exception e) {
             log.error("Error resetting repository", e);
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            if (msg.contains("Permission denied") || msg.contains("Access is denied")) {
+                msg = "Permission Denied. Close any open files/terminals in 'workspaces' folder and try again.";
+            }
+            return ResponseEntity.internalServerError().body("Error: " + msg);
         }
     }
 
@@ -170,17 +178,26 @@ public class RepositoryController {
             User user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
-            String latestPatEncrypted = gitService.isAzureUrl(repoUrl)
+            String latestPatEncrypted = gitService.isAzureUrl(normalizedUrl)
                     ? user.getAzurePat()
                     : user.getGithubToken();
             
-            if (latestPatEncrypted != null && !latestPatEncrypted.equals(gitRepo.getPersonalAccessToken())) {
-                log.info("Updating repository PAT with latest from user settings for {}", repoUrl);
+            if (latestPatEncrypted == null || latestPatEncrypted.isEmpty()) {
+                log.warn("No PAT found in user settings for {} during sync", username);
+                return ResponseEntity.badRequest().body("Please configure your Azure DevOps PAT in Settings -> Authentication first.");
+            }
+
+            if (!latestPatEncrypted.equals(gitRepo.getPersonalAccessToken())) {
+                log.info("Updating repository record with latest PAT for {}", normalizedUrl);
                 gitRepo.setPersonalAccessToken(latestPatEncrypted);
                 gitRepoRepository.save(gitRepo);
             }
 
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
+            
+            if (pat == null || pat.isEmpty()) {
+                return ResponseEntity.badRequest().body("Personal Access Token not configured. Please update in Settings -> Authentication.");
+            }
             
             // Normalize path for Windows compatibility and to bypass stale database paths
             String localPath = workspaceService.getRepoPath(username, repoUrl);
@@ -201,7 +218,21 @@ public class RepositoryController {
             return ResponseEntity.ok("Repository and telemetry synced with remote");
         } catch (Exception e) {
             log.error("Error syncing repository", e);
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            
+            // Check for OS/Filesystem level permissions vs Git/Auth permissions
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
+            File repoDir = new File(localPath);
+            
+            if (!repoDir.exists()) {
+                msg = "Project folder missing. Please try Re-cloning from the Workspace tab.";
+            } else if (msg.contains("Permission denied") || msg.contains("Access is denied") || msg.contains("could not lock") || msg.contains(".lock")) {
+                msg = "Git operation blocked. This could be a local file lock (close open terminals, IDEs, or VS Code) OR your Azure PAT lacks 'Code (Read & Write)' permissions.";
+            } else if (msg.contains("not authorized") || msg.contains("401") || msg.contains("Auth fail")) {
+                msg = "Authentication failed (401). Your Azure PAT may be invalid or expired. Please update it in Settings -> Authentication.";
+            }
+            
+            return ResponseEntity.internalServerError().body("Error: " + msg);
         }
     }
 
@@ -276,7 +307,11 @@ public class RepositoryController {
             return ResponseEntity.ok(createdBranch);
         } catch (Exception e) {
             log.error("Error creating branch", e);
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            if (msg.contains(".lock")) {
+                msg = "Git is busy or a stale lock exists (index.lock). I have attempted to clean it, please try again.";
+            }
+            return ResponseEntity.internalServerError().body("Error: " + msg);
         }
     }
 
@@ -341,7 +376,13 @@ public class RepositoryController {
             return ResponseEntity.ok(branchName);
         } catch (Exception e) {
             log.error("Error switching branch", e);
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            if (msg.contains(".lock") || msg.contains("busy") || msg.contains("Permission denied")) {
+                msg = "Git is busy, a stale lock exists, or there is a permission issue. I have attempted to clean it, but if this persists, the workspace files might be locked by another process (IDE) or have incorrect Docker permissions.";
+            } else if (msg.contains("401") || msg.contains("403") || msg.contains("not authorized")) {
+                msg = "Permission Denied from Azure DevOps. Your PAT may have expired or lacks 'Code (Read & Write)' permissions.";
+            }
+            return ResponseEntity.internalServerError().body("Error: " + msg);
         }
     }
 
@@ -376,17 +417,44 @@ public class RepositoryController {
     }
 
     private Optional<GitRepository> findGitRepo(String username, String repoUrl) {
+        if (repoUrl == null) return Optional.empty();
+        
         String normalizedUrl = repoUrl.trim();
         if (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
         
+        // Strategy: Try exact, then normalized, then with/without .git, then CLEANED (no creds)
         Optional<GitRepository> opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
-        if (opt.isEmpty()) {
-            opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
-        }
+        if (opt.isEmpty()) opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
+        
         if (opt.isEmpty()) {
             String alt = normalizedUrl.endsWith(".git") ? normalizedUrl.substring(0, normalizedUrl.length() - 4) : normalizedUrl + ".git";
             opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, alt);
         }
+
+        // If still not found, search by "Project Name" extracted from URL as a last resort fallback
+        if (opt.isEmpty()) {
+            log.info("Deep search for repo: {} for user: {}", repoUrl, username);
+            String repoName = repoUrl;
+            if (repoName.endsWith(".git")) repoName = repoName.substring(0, repoName.length() - 4);
+            if (repoName.contains("/")) repoName = repoName.substring(repoName.lastIndexOf("/") + 1);
+            
+            final String targetName = repoName;
+            java.util.List<GitRepository> userRepos = gitRepoRepository.findByUsername(username);
+            opt = userRepos.stream()
+                .filter(r -> {
+                    String rUrl = r.getRepositoryUrl();
+                    return rUrl != null && rUrl.toLowerCase().contains(targetName.toLowerCase());
+                })
+                .findFirst();
+            
+            if (opt.isPresent()) {
+                log.info("Repo found via deep search match: {}", opt.get().getRepositoryUrl());
+            } else {
+                log.warn("Repository NOT found after deep search. Provided URL: {}. Registered repos for {}: {}", 
+                    repoUrl, username, userRepos.stream().map(GitRepository::getRepositoryUrl).toList());
+            }
+        }
+        
         return opt;
     }
 }
