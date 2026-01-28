@@ -68,8 +68,18 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                     <IconButton onClick={onBack} sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f1f5f9' } }}>
                         <ArrowBackIcon />
                     </IconButton>
-                    <Box sx={{ p: 1.5, borderRadius: '16px', bgcolor: '#0f172a', color: 'white' }}>
-                        <ScienceIcon fontSize="large" />
+                    <Box sx={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: '18px',
+                        background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 10px 20px -5px rgba(15, 23, 42, 0.3)'
+                    }}>
+                        <ScienceIcon sx={{ fontSize: 32 }} />
                     </Box>
                     <Box>
                         <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: '-1px', color: '#0f172a' }}>
@@ -119,12 +129,22 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                                 slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', maxWidth: 350, borderRadius: '12px' } } }}
                             >
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
-                                    <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
-                                        <SpeedIcon />
+                                    <Box sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '12px',
+                                        bgcolor: 'rgba(99, 102, 241, 0.08)',
+                                        color: '#6366f1',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid rgba(99, 102, 241, 0.1)'
+                                    }}>
+                                        <SpeedIcon sx={{ fontSize: 22 }} />
                                     </Box>
                                     <Box>
                                         <Typography variant="h6" sx={{ fontWeight: 900 }}>Performance Anomalies</Typography>
-                                        <Typography variant="caption" sx={{ color: '#64748b' }}>Z-Score outlier detection (σ {'>'} 1.5)</Typography>
+                                        <Typography variant="caption" sx={{ color: '#64748b' }}>Z-Score outlier detection (sigma {'>'} 1.5)</Typography>
                                     </Box>
                                 </Box>
                             </Tooltip>
@@ -147,7 +167,7 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                                             </TableCell>
                                             <TableCell align="right">
                                                 <Chip
-                                                    label={`${a.zScore > 0 ? '+' : ''}${a.zScore}σ`}
+                                                    label={`${a.zScore > 0 ? '+' : ''}${a.zScore} sigma`}
                                                     size="small"
                                                     sx={{
                                                         fontWeight: 800,
@@ -197,8 +217,18 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                                 slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', maxWidth: 350, borderRadius: '12px' } } }}
                             >
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
-                                    <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
-                                        <MonitorHeartIcon />
+                                    <Box sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '12px',
+                                        bgcolor: 'rgba(34, 197, 94, 0.08)',
+                                        color: '#22c55e',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid rgba(34, 197, 94, 0.1)'
+                                    }}>
+                                        <MonitorHeartIcon sx={{ fontSize: 22 }} />
                                     </Box>
                                     <Box>
                                         <Typography variant="h6" sx={{ fontWeight: 900 }}>Stability Significance</Typography>
@@ -276,8 +306,18 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                                 slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', maxWidth: 350, borderRadius: '12px' } } }}
                             >
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
-                                    <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-                                        <AutoGraphIcon />
+                                    <Box sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '12px',
+                                        bgcolor: 'rgba(239, 68, 68, 0.08)',
+                                        color: '#ef4444',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid rgba(239, 68, 68, 0.1)'
+                                    }}>
+                                        <AutoGraphIcon sx={{ fontSize: 22 }} />
                                     </Box>
                                     <Box>
                                         <Typography variant="h6" sx={{ fontWeight: 900 }}>Risk Forecasting</Typography>

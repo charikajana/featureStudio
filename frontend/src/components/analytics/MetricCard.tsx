@@ -26,15 +26,16 @@ export const MetricCard: React.FC<MetricCardProps> = ({ label, value, sub, icon:
             }
         }}>
             <Box sx={{
-                width: 44,
-                height: 44,
+                width: 42,
+                height: 42,
                 borderRadius: '12px',
-                bgcolor: `${color}10`,
+                bgcolor: `${color}08`,
                 color: color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                border: `1px solid ${color}15`
             }}>
                 <Icon sx={{ fontSize: '1.2rem' }} />
             </Box>

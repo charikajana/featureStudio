@@ -16,6 +16,7 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -31,7 +32,7 @@ public class ProjectAnalyticsService {
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final com.editor.backend.repository.ScenarioConfigurationRepository configurationRepository;
 
-    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    @Value("${app.azure.devops.base-url}")
     private String azureBaseUrl;
 
     public com.editor.backend.repository.ScenarioConfigurationRepository getConfigurationRepository() {

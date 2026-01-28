@@ -176,9 +176,9 @@ export const featureService = {
             headers: getAuthHeaders()
         }),
 
-    getStabilityExplorer: (repoUrl: string, page: number = 0, size: number = 20, search?: string, flakyOnly: boolean = false) =>
+    getStabilityExplorer: (repoUrl: string, branch?: string, page: number = 0, size: number = 20, search?: string, flakyOnly: boolean = false) =>
         api.get<any>('/pipelines/stability/explorer', {
-            params: { repoUrl, page, size, search, flakyOnly },
+            params: { repoUrl, branch, page, size, search, flakyOnly },
             headers: getAuthHeaders()
         }),
 

@@ -6,10 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -26,10 +28,10 @@ public class PipelineService {
     private final com.editor.backend.repository.ScenarioResultRepository scenarioResultRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    @Value("${app.azure.devops.base-url}")
     private String azureBaseUrl;
 
-    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.api-version}")
+    @Value("${app.azure.devops.api-version}")
     private String azureApiVersion;
 
     private String normalizeRepoUrl(String url) {
@@ -216,7 +218,7 @@ public class PipelineService {
         try {
             // 1. Get Pipeline Run Details
             String runUrl = baseUrl + "/pipelines/" + repo.getAzurePipelineId() + "/runs/" + runId + "?api-version=" + azureApiVersion;
-            ResponseEntity<Map> runResponse = restTemplate.exchange(runUrl, org.springframework.http.HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> runResponse = restTemplate.exchange(runUrl, HttpMethod.GET, entity, Map.class);
             Map<String, Object> runData = runResponse.getBody();
 
             if (runData != null) {
@@ -452,23 +454,35 @@ public class PipelineService {
 
         // Use the PAT from the user who has it configured (not necessarily the current user)
         String decryptedPat = encryptionService.decrypt(userWithPat.getAzurePat());
-        String url = String.format("%s/%s/%s/_apis/pipelines/%s/runs?api-version=%s&$top=%d",
-                azureBaseUrl, repo.getAzureOrg(), repo.getAzureProject(), pipelineId, azureApiVersion, fetchLimit);
+        
+        if (decryptedPat == null || decryptedPat.isEmpty()) {
+            throw new RuntimeException("Decrypted Azure PAT is empty. Please re-enter it in Settings.");
+        }
 
-        log.info("User '{}' is viewing pipeline history for '{}' (using shared credentials)", username, repoUrl);
+        String org = repo.getAzureOrg();
+        String proj = repo.getAzureProject();
+        String pipe = pipelineId;
+
+        // Diagnostic Logging
+        log.info("[DIAGNOSTIC] Listing runs for Org: {}, Project: {}, PipelineId: {}", org, proj, pipe);
+
+        String url = String.format("%s/%s/%s/_apis/pipelines/%s/runs?api-version=%s&$top=%d",
+                azureBaseUrl, org, proj, pipe, azureApiVersion, fetchLimit);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        
+        // Use UTF-8 for consistent encoding
         String auth = ":" + decryptedPat;
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+        String encodedAuth = java.util.Base64.getEncoder().encodeToString(auth.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         headers.set("Authorization", "Basic " + encodedAuth);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         try {
-            log.info("Fetching pipeline runs from: {}", url);
-            ResponseEntity<Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, Map.class);
+            log.info("Fetching pipeline runs from URL: {}", url);
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
             Map<String, Object> responseBody = response.getBody();
 
             if (responseBody != null && responseBody.containsKey("value")) {
@@ -541,7 +555,7 @@ public class PipelineService {
                             
                             ResponseEntity<Map> testRunsResponse = restTemplate.exchange(
                                 testRunsUrl, 
-                                org.springframework.http.HttpMethod.GET, 
+                                HttpMethod.GET, 
                                 entity, 
                                 Map.class
                             );

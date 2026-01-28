@@ -116,7 +116,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
                 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Box component="span" sx={{ opacity: 0.7 }}>BRANCH:</Box> {currentBranch || 'main'}
+                            <Box component="span" sx={{ opacity: 0.7 }}>BRANCH:</Box> {currentBranch || '...'}
                         </Typography>
                         <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <Box component="span" sx={{ opacity: 0.7 }}>SYNC:</Box> OK

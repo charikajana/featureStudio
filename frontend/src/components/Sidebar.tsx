@@ -62,12 +62,15 @@ const SidebarButton: FC<{
             position: 'relative',
             borderRadius: '10px',
             color: active ? 'white' : 'rgba(255,255,255,0.6)',
-            bgcolor: active ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            bgcolor: active ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+            border: active ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
+            boxShadow: active ? '0 4px 12px rgba(99, 102, 241, 0.1)' : 'none',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
                 color: danger ? '#fca5a5' : 'white',
-                bgcolor: active ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255,255,255,0.05)',
-                transform: 'translateY(-1px)'
+                bgcolor: active ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255,255,255,0.08)',
+                transform: 'translateY(-1px)',
+                boxShadow: active ? '0 6px 16px rgba(99, 102, 241, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
             },
             '&:active': {
                 transform: 'scale(0.95)',
@@ -99,8 +102,8 @@ export const Sidebar: FC<SidebarProps> = ({
     onRun
 }) => {
     const defaultOrder: SidebarItem[] = [
-        { id: 'editor', icon: EditNoteIcon, title: 'Editor', type: 'nav', view: 'editor' },
         { id: 'project-setup', icon: FolderSpecialIcon, title: 'Project Management', type: 'nav', view: 'project-setup' },
+        { id: 'editor', icon: EditNoteIcon, title: 'Editor', type: 'nav', view: 'editor' },
         { id: 'stats', icon: CheckCircleIcon, title: 'Tests Dashboard', type: 'nav', view: 'stats' },
         { id: 'pipeline', icon: MonitorHeartIcon, title: 'Pipeline Monitor', type: 'nav', view: 'pipeline' },
         { id: 'analytics', icon: AssessmentIcon, title: 'Analytics Hub', type: 'nav', view: 'analytics' },
@@ -123,7 +126,15 @@ export const Sidebar: FC<SidebarProps> = ({
 
                 // Add any items in defaultOrder that aren't in the saved list (new features)
                 const newItems = defaultOrder.filter(d => !parsed.some((p: any) => p.id === d.id));
-                return [...existingItems, ...newItems];
+                const combined = [...existingItems, ...newItems];
+
+                // Force project-setup to the first position if it's in the list
+                const setupIdx = combined.findIndex(i => i.id === 'project-setup');
+                if (setupIdx > 0) {
+                    const [setup] = combined.splice(setupIdx, 1);
+                    combined.unshift(setup);
+                }
+                return combined;
             } catch (e) {
                 return defaultOrder;
             }

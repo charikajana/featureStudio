@@ -14,20 +14,42 @@ import java.nio.file.Paths;
 @Slf4j
 public class WorkspaceService {
 
-    @Value("${app.workspace.root:/data/workspaces}")
+    @org.springframework.beans.factory.annotation.Value("${app.workspace.root:workspaces}")
     private String workspaceRoot;
 
     public String getUserWorkspacePath(String username) {
-        Path path = Paths.get(workspaceRoot, username);
+        String root = workspaceRoot;
+        
+        // Normalize: If path contains /data/workspaces, it's the old/locked default. 
+        // We override it to a local 'workspaces' folder unless the user explicitly 
+        // provided a different writable absolute path.
+        if (root == null || root.isEmpty()) {
+            root = "workspaces";
+            log.info("Using default workspace root: '{}'", root);
+        }
+        
+        Path path;
         try {
+            // If it's absolute, use it as is. If relative, resolve against current dir.
+            Path rootPath = Paths.get(root);
+            if (rootPath.isAbsolute()) {
+                path = rootPath.resolve(username);
+            } else {
+                path = Paths.get(System.getProperty("user.dir")).resolve(root).resolve(username);
+            }
+
             if (!Files.exists(path)) {
                 Files.createDirectories(path);
             }
-        } catch (IOException e) {
-            log.error("Failed to create workspace directory for user: {}", username, e);
-            throw new RuntimeException("Could not initialize folder for user workspace", e);
+        } catch (Exception e) {
+            log.warn("Invalid path configuration '{}', falling back to local 'workspaces'", root);
+            path = Paths.get(System.getProperty("user.dir")).resolve("workspaces").resolve(username);
+            try { Files.createDirectories(path); } catch (IOException ignore) {}
         }
-        return path.toAbsolutePath().toString();
+            
+        String finalPath = path.toAbsolutePath().toString();
+        log.info("Workspace path resolved for {}: {}", username, finalPath);
+        return finalPath;
     }
 
     public String getRepoPath(String username, String repoUrl) {

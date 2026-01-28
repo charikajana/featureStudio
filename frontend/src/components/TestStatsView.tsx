@@ -118,8 +118,17 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                     <Box sx={{ flex: 1 }} />
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                        <Box sx={{ p: 1, bgcolor: alpha('#6366f1', 0.1), borderRadius: 2 }}>
-                                            <HistoryIcon sx={{ color: '#6366f1' }} />
+                                        <Box sx={{
+                                            width: 40,
+                                            height: 40,
+                                            bgcolor: alpha('#6366f1', 0.08),
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(99, 102, 241, 0.1)'
+                                        }}>
+                                            <HistoryIcon sx={{ color: '#6366f1', fontSize: 22 }} />
                                         </Box>
                                         <Box sx={{ textAlign: 'left' }}>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>
@@ -250,7 +259,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
 
                                 <Box sx={{ mt: 'auto', pt: 3, borderTop: '1px solid #e2e8f0' }}>
                                     <Typography variant="caption" sx={{ color: '#64748b', fontStyle: 'italic', display: 'block', textAlign: 'center', lineHeight: 1.6 }}>
-                                        💡 Stability above 90% ensures predictable deployments and team confidence
+                                        Stability above 90% ensures predictable deployments and team confidence
                                     </Typography>
                                 </Box>
                             </Paper>
@@ -297,8 +306,17 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                     <Box sx={{ flex: 1 }} />
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                        <Box sx={{ p: 1, bgcolor: alpha('#ef4444', 0.1), borderRadius: 2 }}>
-                                            <SentimentVeryDissatisfiedIcon sx={{ color: '#ef4444' }} />
+                                        <Box sx={{
+                                            width: 40,
+                                            height: 40,
+                                            bgcolor: alpha('#ef4444', 0.08),
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(239, 68, 68, 0.1)'
+                                        }}>
+                                            <SentimentVeryDissatisfiedIcon sx={{ color: '#ef4444', fontSize: 22 }} />
                                         </Box>
                                         <Box sx={{ textAlign: 'left' }}>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>
@@ -428,7 +446,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
 
                                 <Box sx={{ mt: 'auto', pt: 3, borderTop: '1px solid #e2e8f0' }}>
                                     <Typography variant="caption" sx={{ color: '#64748b', fontStyle: 'italic', display: 'block', textAlign: 'center', lineHeight: 1.6 }}>
-                                        💡 Eliminating flaky tests accelerates development velocity and builds developer trust
+                                        Eliminating flaky tests accelerates development velocity and builds developer trust
                                     </Typography>
                                 </Box>
                             </Paper>
@@ -474,8 +492,17 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                     <Box sx={{ flex: 1 }} />
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                        <Box sx={{ p: 1, bgcolor: alpha('#10b981', 0.1), borderRadius: 2 }}>
-                                            <AccountTreeIcon sx={{ color: '#10b981' }} />
+                                        <Box sx={{
+                                            width: 40,
+                                            height: 40,
+                                            bgcolor: alpha('#10b981', 0.08),
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(16, 185, 129, 0.1)'
+                                        }}>
+                                            <AccountTreeIcon sx={{ color: '#10b981', fontSize: 22 }} />
                                         </Box>
                                         <Box sx={{ textAlign: 'left' }}>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>
@@ -615,7 +642,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
 
                                 <Box sx={{ mt: 'auto', pt: 3, borderTop: '1px solid #e2e8f0' }}>
                                     <Typography variant="caption" sx={{ color: '#64748b', fontStyle: 'italic', display: 'block', textAlign: 'center', lineHeight: 1.6 }}>
-                                        💡 Periodical tracking of test volume helps in identifying automation velocity and platform coverage expansion
+                                        Periodical tracking of test volume helps in identifying automation velocity and platform coverage expansion
                                     </Typography>
                                 </Box>
                             </Paper>

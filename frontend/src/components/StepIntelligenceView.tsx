@@ -91,8 +91,18 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                             <ArrowBackIcon />
                         </IconButton>
                     </Tooltip>
-                    <Box sx={{ p: 1.5, borderRadius: '16px', bgcolor: '#6366f1', color: 'white', boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)' }}>
-                        <FormatListBulletedIcon fontSize="large" />
+                    <Box sx={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: '18px',
+                        background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)'
+                    }}>
+                        <FormatListBulletedIcon sx={{ fontSize: 32 }} />
                     </Box>
                     <Box>
                         <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: '#0f172a', lineHeight: 1.1 }}>
@@ -161,8 +171,19 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                             }
                             slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '12px', maxWidth: 300 } } }}
                         >
-                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1', cursor: 'pointer' }}>
-                                <LayersIcon />
+                            <Box sx={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(99, 102, 241, 0.08)',
+                                color: '#6366f1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(99, 102, 241, 0.1)',
+                                cursor: 'pointer'
+                            }}>
+                                <LayersIcon sx={{ fontSize: 24 }} />
                             </Box>
                         </Tooltip>
                         <Box>
@@ -192,8 +213,19 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                             }
                             slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '12px', maxWidth: 300 } } }}
                         >
-                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', cursor: 'pointer' }}>
-                                <AutoGraphIcon />
+                            <Box sx={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(34, 197, 94, 0.08)',
+                                color: '#22c55e',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(34, 197, 94, 0.1)',
+                                cursor: 'pointer'
+                            }}>
+                                <AutoGraphIcon sx={{ fontSize: 24 }} />
                             </Box>
                         </Tooltip>
                         <Box>
@@ -220,8 +252,19 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                             }
                             slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '12px', maxWidth: 300 } } }}
                         >
-                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', cursor: 'pointer' }}>
-                                <FormatListBulletedIcon />
+                            <Box sx={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(245, 158, 11, 0.08)',
+                                color: '#f59e0b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(245, 158, 11, 0.1)',
+                                cursor: 'pointer'
+                            }}>
+                                <FormatListBulletedIcon sx={{ fontSize: 24 }} />
                             </Box>
                         </Tooltip>
                         <Box>

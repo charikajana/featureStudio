@@ -34,12 +34,13 @@ import { featureService } from '../services/api';
 
 interface StabilityExplorerViewProps {
     repoUrl: string;
+    branch?: string;
     onBack: () => void;
     initialFilter?: 'all' | 'flaky';
     onSync?: () => Promise<void>;
 }
 
-export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl, onBack, initialFilter = 'all', onSync }) => {
+export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl, branch, onBack, initialFilter = 'all', onSync }) => {
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -58,7 +59,7 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await featureService.getStabilityExplorer(repoUrl, page, rowsPerPage, debouncedSearch, onlyFlaky);
+            const res = await featureService.getStabilityExplorer(repoUrl, branch, page, rowsPerPage, debouncedSearch, onlyFlaky);
             setData(res.data);
             setLastRefresh(new Date());
         } catch (error) {

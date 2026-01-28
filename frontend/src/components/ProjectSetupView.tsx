@@ -31,6 +31,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SearchIcon from '@mui/icons-material/Search';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { featureService } from '../services/api';
 
 interface ProjectSetupViewProps {
@@ -59,6 +60,11 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
     const [baseBranch, setBaseBranch] = useState('');
     const [newBranchName, setNewBranchName] = useState('');
     const [creatingBranch, setCreatingBranch] = useState(false);
+
+    // Delete states
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [repoToDelete, setRepoToDelete] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         fetchRepos();
@@ -159,6 +165,28 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
             setError(e.response?.data || 'Failed to create branch');
         } finally {
             setCreatingBranch(false);
+        }
+    };
+
+    const handleDeleteRepo = async () => {
+        if (!repoToDelete) return;
+        setDeleting(true);
+        try {
+            await featureService.deleteRepository(repoToDelete);
+
+            // If we deleted the current active repo, clear the app state
+            if (repoToDelete === currentRepoUrl) {
+                onSwitchRepo('');
+            }
+
+            setSuccess('Repository removed successfully');
+            setDeleteDialogOpen(false);
+            setRepoToDelete(null);
+            fetchRepos();
+        } catch (e: any) {
+            setError(e.response?.data || 'Failed to remove repository');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -297,7 +325,7 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                             }
                                         }}
                                     >
-                                        <CardContent sx={{ pb: 1, pt: 2.5, overflow: 'visible' }}>
+                                        <CardContent sx={{ px: 2.5, pb: 1, pt: 2.5, overflow: 'visible' }}>
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                     <Box sx={{
@@ -310,9 +338,26 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                         {repo.repositoryUrl.includes('github') ? <GitHubIcon sx={{ fontSize: 24, color: '#0f172a' }} /> : <StorageIcon sx={{ fontSize: 24, color: '#6366f1' }} />}
                                                     </Box>
                                                     <Box sx={{ minWidth: 0, flex: 1 }}>
-                                                        <Typography variant="subtitle1" noWrap sx={{ fontWeight: 800, lineHeight: 1.2, color: '#1e293b' }}>
-                                                            {repo.repositoryUrl.split('/').pop()?.replace('.git', '')}
-                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.2 }}>
+                                                            <Typography variant="subtitle1" noWrap sx={{ fontWeight: 800, lineHeight: 1.2, color: '#1e293b' }}>
+                                                                {repo.repositoryUrl.split('/').pop()?.replace('.git', '')}
+                                                            </Typography>
+                                                            {currentRepoUrl === repo.repositoryUrl && (
+                                                                <Chip
+                                                                    label="ACTIVE"
+                                                                    size="small"
+                                                                    sx={{
+                                                                        fontWeight: 900,
+                                                                        height: 20,
+                                                                        fontSize: '0.6rem',
+                                                                        bgcolor: '#6366f1',
+                                                                        color: 'white',
+                                                                        flexShrink: 0,
+                                                                        '& .MuiChip-label': { px: 1, lineHeight: 1 }
+                                                                    }}
+                                                                />
+                                                            )}
+                                                        </Box>
                                                         <Typography
                                                             variant="caption"
                                                             sx={{
@@ -328,26 +373,6 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                         </Typography>
                                                     </Box>
                                                 </Box>
-                                                {currentRepoUrl === repo.repositoryUrl && (
-                                                    <Chip
-                                                        label="ACTIVE"
-                                                        size="small"
-                                                        sx={{
-                                                            fontWeight: 900,
-                                                            height: 24,
-                                                            fontSize: '0.65rem',
-                                                            bgcolor: '#6366f1',
-                                                            color: 'white',
-                                                            flexShrink: 0,
-                                                            ml: 1,
-                                                            whiteSpace: 'nowrap',
-                                                            '& .MuiChip-label': {
-                                                                px: 1.5,
-                                                                lineHeight: 1
-                                                            }
-                                                        }}
-                                                    />
-                                                )}
                                             </Box>
                                         </CardContent>
                                         <CardActions sx={{ px: 2.5, pb: 2.5, pt: 0, justifyContent: 'space-between', alignItems: 'center' }}>
@@ -366,38 +391,57 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                 </Typography>
                                             </Box>
 
-                                            {repo.azurePipelineId && (
-                                                <Tooltip title="Archive new runs into local vault">
+                                            <Tooltip title="Archive new runs into local vault">
+                                                <Button
+                                                    size="small"
+                                                    onClick={async () => {
+                                                        setLoading(true);
+                                                        try {
+                                                            await featureService.syncVault(repo.repositoryUrl);
+                                                            setSuccess(`Archival initiated for ${repo.repositoryUrl.split('/').pop()}`);
+                                                        } catch (e) {
+                                                            setError('Failed to initiate archival');
+                                                        } finally {
+                                                            setLoading(false);
+                                                        }
+                                                    }}
+                                                    disabled={loading}
+                                                    startIcon={<StorageIcon fontSize="small" />}
+                                                    sx={{
+                                                        borderRadius: 5,
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: 800,
+                                                        color: '#059669',
+                                                        bgcolor: alpha('#10b981', 0.05),
+                                                        '&:hover': { bgcolor: alpha('#10b981', 0.1) }
+                                                    }}
+                                                >
+                                                    Sync Vault
+                                                </Button>
+                                            </Tooltip>
+
+                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                <Tooltip title="Remove Project">
                                                     <Button
                                                         size="small"
-                                                        onClick={async () => {
-                                                            setLoading(true);
-                                                            try {
-                                                                await featureService.syncVault(repo.repositoryUrl);
-                                                                setSuccess(`Archival initiated for ${repo.repositoryUrl.split('/').pop()}`);
-                                                            } catch (e) {
-                                                                setError('Failed to initiate archival');
-                                                            } finally {
-                                                                setLoading(false);
-                                                            }
+                                                        color="error"
+                                                        onClick={() => {
+                                                            setRepoToDelete(repo.repositoryUrl);
+                                                            setDeleteDialogOpen(true);
                                                         }}
-                                                        disabled={loading}
-                                                        startIcon={<StorageIcon fontSize="small" />}
                                                         sx={{
-                                                            borderRadius: 5,
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 800,
-                                                            color: '#059669',
-                                                            bgcolor: alpha('#10b981', 0.05),
-                                                            '&:hover': { bgcolor: alpha('#10b981', 0.1) }
+                                                            minWidth: 36,
+                                                            width: 36,
+                                                            height: 36,
+                                                            borderRadius: '10px',
+                                                            bgcolor: alpha('#ef4444', 0.05),
+                                                            '&:hover': { bgcolor: alpha('#ef4444', 0.1) },
+                                                            mr: 1
                                                         }}
                                                     >
-                                                        Sync Vault
+                                                        <DeleteOutlineIcon sx={{ fontSize: 20 }} />
                                                     </Button>
                                                 </Tooltip>
-                                            )}
-
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Button
                                                     size="small"
                                                     onClick={() => handleOpenBranchDialog(repo.repositoryUrl)}
@@ -506,6 +550,45 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                         sx={{ bgcolor: '#6366f1', fontWeight: 700, px: 3 }}
                     >
                         {creatingBranch ? <CircularProgress size={20} color="inherit" /> : 'Create'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => !deleting && setDeleteDialogOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 800, color: '#1e293b' }}>Remove Project?</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Are you sure you want to remove <strong>{repoToDelete?.split('/').pop()?.replace('.git', '')}</strong>?
+                        This will delete the local project files and its configuration. This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, gap: 1 }}>
+                    <Button
+                        onClick={() => setDeleteDialogOpen(false)}
+                        disabled={deleting}
+                        sx={{ fontWeight: 700, borderRadius: 2 }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={handleDeleteRepo}
+                        disabled={deleting}
+                        sx={{
+                            fontWeight: 800,
+                            borderRadius: 2,
+                            bgcolor: '#ef4444',
+                            '&:hover': { bgcolor: '#dc2626' }
+                        }}
+                    >
+                        {deleting ? <CircularProgress size={20} color="inherit" /> : 'Remove Project'}
                     </Button>
                 </DialogActions>
             </Dialog>

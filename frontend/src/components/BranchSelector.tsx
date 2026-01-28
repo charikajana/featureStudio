@@ -26,6 +26,7 @@ interface BranchSelectorProps {
     onCreateBranch: (branchName: string, baseBranch: string) => Promise<void>;
     onNewBranchClick?: () => void;
     variant?: 'header' | 'sidebar';
+    disabled?: boolean;
 }
 
 export const BranchSelector: FC<BranchSelectorProps> = ({
@@ -34,7 +35,8 @@ export const BranchSelector: FC<BranchSelectorProps> = ({
     onSwitchBranch,
     onCreateBranch,
     onNewBranchClick,
-    variant = 'header'
+    variant = 'header',
+    disabled = false
 }) => {
     const [branchMenuAnchor, setBranchMenuAnchor] = useState<null | HTMLElement>(null);
     const [branchDialogOpen, setBranchDialogOpen] = useState(false);
@@ -78,7 +80,7 @@ export const BranchSelector: FC<BranchSelectorProps> = ({
             {/* Branch Indicator with Dropdown */}
             {variant === 'header' ? (
                 <Box
-                    onClick={handleBranchClick}
+                    onClick={disabled ? undefined : handleBranchClick}
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -87,26 +89,28 @@ export const BranchSelector: FC<BranchSelectorProps> = ({
                         py: 0.5,
                         bgcolor: '#f1f5f9',
                         borderRadius: '6px',
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: '#e2e8f0' }
+                        cursor: disabled ? 'default' : 'pointer',
+                        '&:hover': { bgcolor: disabled ? '#f1f5f9' : '#e2e8f0' },
+                        opacity: disabled ? 0.8 : 1
                     }}
                 >
                     <AccountTreeIcon sx={{ fontSize: 16, color: '#64748b' }} />
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569' }}>
-                        {currentBranch}
+                        {currentBranch || 'Detecting...'}
                     </Typography>
                     <ArrowDropDownIcon sx={{ fontSize: 18, color: '#64748b' }} />
                 </Box>
             ) : (
                 <AccountTreeIcon
-                    onClick={handleBranchClick}
+                    onClick={disabled ? undefined : handleBranchClick}
                     sx={{
                         color: 'white',
                         fontSize: 24,
-                        cursor: 'pointer',
-                        '&:hover': { opacity: 0.8 }
+                        cursor: disabled ? 'default' : 'pointer',
+                        '&:hover': { opacity: disabled ? 1 : 0.8 },
+                        opacity: disabled ? 0.5 : 1
                     }}
-                    titleAccess={`Branch: ${currentBranch}`}
+                    titleAccess={disabled ? `Branch (Locked): ${currentBranch}` : `Branch: ${currentBranch}`}
                 />
             )}
 
@@ -129,7 +133,7 @@ export const BranchSelector: FC<BranchSelectorProps> = ({
                         onClick={() => handleSwitchBranch(branch)}
                         selected={branch === currentBranch}
                     >
-                        {branch === currentBranch && '✓ '}
+                        {branch === currentBranch && '[ACTIVE] '}
                         {branch}
                     </MenuItem>
                 ))}

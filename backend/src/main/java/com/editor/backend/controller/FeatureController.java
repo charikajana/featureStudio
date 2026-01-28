@@ -34,11 +34,6 @@ public class FeatureController {
     private final UserRepository userRepository;
     private final ProjectAnalyticsService analyticsService;
 
-    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
-    private String azureBaseUrl;
-
-    @org.springframework.beans.factory.annotation.Value("${app.github.base-url}")
-    private String githubBaseUrl;
 
     @GetMapping("/suggestions")
     public ResponseEntity<java.util.Set<String>> getSuggestions(@RequestHeader("X-Username") String username,
@@ -134,14 +129,20 @@ public class FeatureController {
         return ResponseEntity.ok(fileService.readFile(repoPath, path));
     }
 
-    @PostMapping("/save")
-    public ResponseEntity<Void> saveFile(@RequestHeader("X-Username") String username,
+    @PostMapping(value = "/save", consumes = "text/plain")
+    public ResponseEntity<String> saveFile(@RequestHeader("X-Username") String username,
                                          @RequestParam String repoUrl,
                                          @RequestParam String path,
-                                         @RequestBody String content) throws IOException {
-        String repoPath = workspaceService.getRepoPath(username, repoUrl);
-        fileService.writeFile(repoPath, path, content);
-        return ResponseEntity.ok().build();
+                                         @RequestBody String content) {
+        try {
+            log.info("Saving file: {} for user: {} in repo: {}", path, username, repoUrl);
+            String repoPath = workspaceService.getRepoPath(username, repoUrl);
+            fileService.writeFile(repoPath, path, content);
+            return ResponseEntity.ok("File saved successfully");
+        } catch (Exception e) {
+            log.error("Failed to save file: {} in repo: {}", path, repoUrl, e);
+            return ResponseEntity.status(500).body("Failed to save file: " + e.getMessage());
+        }
     }
 
     @PostMapping("/create")
@@ -189,21 +190,21 @@ public class FeatureController {
                                               @RequestParam String repoUrl,
                                               @RequestBody PushRequest request) {
         try {
-            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+            Optional<GitRepository> gitRepoOpt = findGitRepo(username, repoUrl);
             if (gitRepoOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Repository not found for user");
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
-            String localPath = gitRepo.getLocalPath();
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
             
             User user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             String selectedTokenEncrypted = gitRepo.getPersonalAccessToken();
             // Favor the latest global tokens if they are available
-            boolean isAzure = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com") || (azureBaseUrl != null && repoUrl.contains(azureBaseUrl.replace("https://", "")));
-            boolean isGithub = repoUrl.contains("github.com") || (githubBaseUrl != null && repoUrl.contains(githubBaseUrl.replace("https://", "")));
+            boolean isAzure = gitService.isAzureUrl(repoUrl);
+            boolean isGithub = gitService.isGithubUrl(repoUrl);
 
             if (isAzure) {
                 if (user.getAzurePat() != null && !user.getAzurePat().isEmpty()) {
@@ -224,9 +225,9 @@ public class FeatureController {
             // Get current branch
             String currentBranch = gitService.getCurrentBranch(localPath);
             
-            // Restriction: Prevent direct push to main/develop
-            if ("main".equalsIgnoreCase(currentBranch) || "develop".equalsIgnoreCase(currentBranch)) {
-                return ResponseEntity.status(403).body("⚠️ Direct push to '" + currentBranch + "' is restricted. Please create a feature branch and use a Pull Request to merge your changes.");
+            // Restriction: Prevent direct push to main/master/develop
+            if ("main".equalsIgnoreCase(currentBranch) || "master".equalsIgnoreCase(currentBranch) || "develop".equalsIgnoreCase(currentBranch)) {
+                return ResponseEntity.status(403).body("Direct push to '" + currentBranch + "' is restricted for safety. Please create a feature branch and use a Pull Request to merge your changes.");
             }
             
             // Pull latest changes first (to avoid conflicts on push)
@@ -242,5 +243,20 @@ public class FeatureController {
             e.printStackTrace(); // Log the full stack trace
             return ResponseEntity.status(500).body("Push failed: " + e.getMessage());
         }
+    }
+
+    private Optional<GitRepository> findGitRepo(String username, String repoUrl) {
+        String normalizedUrl = repoUrl.trim();
+        if (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
+        
+        Optional<GitRepository> opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+        if (opt.isEmpty()) {
+            opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
+        }
+        if (opt.isEmpty()) {
+            String alt = normalizedUrl.endsWith(".git") ? normalizedUrl.substring(0, normalizedUrl.length() - 4) : normalizedUrl + ".git";
+            opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, alt);
+        }
+        return opt;
     }
 }

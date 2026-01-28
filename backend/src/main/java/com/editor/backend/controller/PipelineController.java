@@ -66,12 +66,13 @@ public class PipelineController {
 
     @GetMapping("/stability/explorer")
     public ResponseEntity<?> getStabilityExplorer(@RequestParam String repoUrl,
+                                                 @RequestParam(required = false) String branch,
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size,
                                                  @RequestParam(required = false) String search,
                                                  @RequestParam(defaultValue = "false") boolean flakyOnly) {
         try {
-            return ResponseEntity.ok(stabilityService.getPaginatedStability(repoUrl, page, size, search, flakyOnly));
+            return ResponseEntity.ok(stabilityService.getPaginatedStability(repoUrl, branch, page, size, search, flakyOnly));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error fetching stability explorer: " + e.getMessage());
         }

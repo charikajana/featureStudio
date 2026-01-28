@@ -208,17 +208,18 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                         transition: 'all 0.2s'
                     }}>
                     <Box sx={{
-                        width: 32,
-                        height: 32,
+                        width: 36,
+                        height: 36,
                         borderRadius: '10px',
-                        bgcolor: data.stabilityDrift >= 0 ? '#22c55e' : '#ef4444',
+                        bgcolor: data.stabilityDrift >= 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'white',
-                        flexShrink: 0
+                        color: data.stabilityDrift >= 0 ? '#22c55e' : '#ef4444',
+                        flexShrink: 0,
+                        border: data.stabilityDrift >= 0 ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
                     }}>
-                        <TrendingUpIcon sx={{ fontSize: 18 }} />
+                        <TrendingUpIcon sx={{ fontSize: 20 }} />
                     </Box>
                     <Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

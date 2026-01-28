@@ -97,6 +97,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
                             availableBranches={availableBranches}
                             onSwitchBranch={onSwitchBranch}
                             onCreateBranch={onCreateBranch}
+                            disabled={['stats', 'pipeline', 'analytics', 'engineering-insights', 'step-intelligence', 'risk-forecasting', 'stability-explorer'].includes(activeView)}
                         />
                     </Box>
 

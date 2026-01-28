@@ -81,6 +81,9 @@ public class FileService {
 
     public void writeFile(String repoPath, String relativePath, String content) throws IOException {
         Path path = Path.of(repoPath, relativePath);
+        if (path.getParent() != null && !Files.exists(path.getParent())) {
+            Files.createDirectories(path.getParent());
+        }
         Files.writeString(path, content, StandardCharsets.UTF_8);
     }
 }

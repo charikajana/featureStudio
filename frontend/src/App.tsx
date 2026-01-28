@@ -109,104 +109,118 @@ function App() {
           onViewChange={setActiveView}
         />
 
-        <Box sx={{ flexGrow: 1, display: 'flex', overflow: 'hidden' }}>
-          {activeView === 'editor' ? (
-            <>
-              {isCloned ? (
-                <EditorLayout
-                  sidebarWidth={sidebarWidth}
-                  setIsResizing={setIsResizing}
-                  tree={tree}
-                  loadFile={loadFile}
-                  setTargetFolder={setTargetFolder}
-                  setModalOpen={setModalOpen}
-                  activeRepoName={activeRepoName}
-                  currentFile={currentFile}
-                  content={content}
-                  setContent={actions.setContent}
-                  onSync={handleSync}
-                  currentBranch={currentBranch}
-                />
-              ) : (
-                <WorkspaceView
-                  allRepos={allRepos}
-                  onSettingsOpen={() => setSettingsModalOpen(true)}
-                  onSwitchRepo={handleSwitchRepo}
-                />
-              )}
-            </>
-          ) : activeView === 'stats' ? (
-            <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
-              <TestStatsView
-                repoUrl={repoUrl}
-                branch={currentBranch}
-                onViewAllScenarios={(filter: "all" | "flaky" | undefined) => {
-                  setStabilityFilter(filter || 'all');
-                  setActiveView('stability-explorer');
-                }}
-              />
+        {/* 
+            Compute the branch to use for analytics/dashboard views.
+            User wants these pages to always point to main/master.
+        */}
+        {(() => {
+          const analyticalBranch = availableBranches.find(b => b === 'main') ||
+            availableBranches.find(b => b === 'master') ||
+            currentBranch ||
+            (availableBranches.length > 0 ? availableBranches[0] : '');
+
+          return (
+            <Box sx={{ flexGrow: 1, display: 'flex', overflow: 'hidden' }}>
+              {activeView === 'editor' ? (
+                <>
+                  {isCloned ? (
+                    <EditorLayout
+                      sidebarWidth={sidebarWidth}
+                      setIsResizing={setIsResizing}
+                      tree={tree}
+                      loadFile={loadFile}
+                      setTargetFolder={setTargetFolder}
+                      setModalOpen={setModalOpen}
+                      activeRepoName={activeRepoName}
+                      currentFile={currentFile}
+                      content={content}
+                      setContent={actions.setContent}
+                      onSync={handleSync}
+                      currentBranch={currentBranch}
+                    />
+                  ) : (
+                    <WorkspaceView
+                      allRepos={allRepos}
+                      onSettingsOpen={() => setSettingsModalOpen(true)}
+                      onSwitchRepo={handleSwitchRepo}
+                    />
+                  )}
+                </>
+              ) : activeView === 'stats' ? (
+                <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
+                  <TestStatsView
+                    repoUrl={repoUrl}
+                    branch={analyticalBranch}
+                    onViewAllScenarios={(filter: "all" | "flaky" | undefined) => {
+                      setStabilityFilter(filter || 'all');
+                      setActiveView('stability-explorer');
+                    }}
+                  />
+                </Box>
+              ) : activeView === 'stability-explorer' ? (
+                <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
+                  <StabilityExplorerView
+                    repoUrl={repoUrl}
+                    branch={analyticalBranch}
+                    onBack={() => setActiveView('stats')}
+                    initialFilter={stabilityFilter}
+                    onSync={handleSync}
+                  />
+                </Box>
+              ) : activeView === 'pipeline' ? (
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <PipelineExecutionView repoUrl={repoUrl} runId={currentRunId} />
+                </Box>
+              ) : activeView === 'project-setup' ? (
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <ProjectSetupView
+                    currentRepoUrl={repoUrl}
+                    onSwitchRepo={(url) => {
+                      handleSwitchRepo(url);
+                      setActiveView('editor');
+                    }}
+                  />
+                </Box>
+              ) : activeView === 'analytics' ? (
+                <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+                  <AdvancedAnalyticsView
+                    repoUrl={repoUrl}
+                    branch={analyticalBranch}
+                    onBack={() => setActiveView('editor')}
+                    onSync={handleSync}
+                    onViewChange={setActiveView}
+                  />
+                </Box>
+              ) : activeView === 'engineering-insights' ? (
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <EngineeringInsightsView
+                    repoUrl={repoUrl}
+                    branch={analyticalBranch}
+                    onBack={() => setActiveView('analytics')}
+                    onSync={handleSync}
+                    onViewChange={setActiveView}
+                  />
+                </Box>
+              ) : activeView === 'step-intelligence' ? (
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <StepIntelligenceView
+                    repoUrl={repoUrl}
+                    branch={analyticalBranch}
+                    onBack={() => setActiveView('analytics')}
+                  />
+                </Box>
+              ) : activeView === 'risk-forecasting' ? (
+                <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <RiskForecastingView
+                    repoUrl={repoUrl}
+                    branch={analyticalBranch}
+                    onBack={() => setActiveView('engineering-insights')}
+                  />
+                </Box>
+              ) : null}
             </Box>
-          ) : activeView === 'stability-explorer' ? (
-            <Box sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#f3f4f6' }}>
-              <StabilityExplorerView
-                repoUrl={repoUrl}
-                onBack={() => setActiveView('stats')}
-                initialFilter={stabilityFilter}
-                onSync={handleSync}
-              />
-            </Box>
-          ) : activeView === 'pipeline' ? (
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <PipelineExecutionView repoUrl={repoUrl} runId={currentRunId} />
-            </Box>
-          ) : activeView === 'project-setup' ? (
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <ProjectSetupView
-                currentRepoUrl={repoUrl}
-                onSwitchRepo={(url) => {
-                  handleSwitchRepo(url);
-                  setActiveView('editor');
-                }}
-              />
-            </Box>
-          ) : activeView === 'analytics' ? (
-            <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-              <AdvancedAnalyticsView
-                repoUrl={repoUrl}
-                branch={currentBranch}
-                onBack={() => setActiveView('editor')}
-                onSync={handleSync}
-                onViewChange={setActiveView}
-              />
-            </Box>
-          ) : activeView === 'engineering-insights' ? (
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <EngineeringInsightsView
-                repoUrl={repoUrl}
-                branch={currentBranch}
-                onBack={() => setActiveView('analytics')}
-                onSync={handleSync}
-                onViewChange={setActiveView}
-              />
-            </Box>
-          ) : activeView === 'step-intelligence' ? (
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <StepIntelligenceView
-                repoUrl={repoUrl}
-                branch={currentBranch}
-                onBack={() => setActiveView('analytics')}
-              />
-            </Box>
-          ) : activeView === 'risk-forecasting' ? (
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <RiskForecastingView
-                repoUrl={repoUrl}
-                branch={currentBranch}
-                onBack={() => setActiveView('engineering-insights')}
-              />
-            </Box>
-          ) : null}
-        </Box>
+          );
+        })()}
       </Box>
 
       {loading && (

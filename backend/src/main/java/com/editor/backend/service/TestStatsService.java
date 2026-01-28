@@ -37,6 +37,7 @@ public class TestStatsService {
     private final com.editor.backend.repository.TestCaseTrendRepository trendRepository;
     private final com.editor.backend.repository.GitRepositoryRepository gitRepoRepository;
     private final com.editor.backend.repository.ScenarioResultRepository scenarioResultRepository;
+    private final WorkspaceService workspaceService;
 
     @Cacheable(value = "testStats", key = "{#username, #repoUrl, #branch}")
     public TestStats calculateStats(String username, String repoUrl, String repoPath, String branch) {
@@ -155,9 +156,9 @@ public class TestStatsService {
 
     private void recordTrendForRepo(com.editor.backend.model.GitRepository repo) {
         try {
-            String repoPath = repo.getLocalPath();
             String repoUrl = repo.getRepositoryUrl();
             String username = repo.getUsername();
+            String repoPath = workspaceService.getRepoPath(username, repoUrl);
 
             try (Git git = Git.open(new java.io.File(repoPath))) {
                 Repository jgitRepo = git.getRepository();

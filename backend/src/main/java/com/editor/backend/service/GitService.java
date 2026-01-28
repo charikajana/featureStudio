@@ -9,6 +9,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,25 +21,38 @@ import java.util.List;
 @Slf4j
 public class GitService {
 
-    @org.springframework.beans.factory.annotation.Value("${app.azure.devops.base-url}")
+    @Value("${app.azure.devops.base-url}")
     private String azureBaseUrl;
 
-    @org.springframework.beans.factory.annotation.Value("${app.github.base-url}")
+    @Value("${app.github.base-url}")
     private String githubBaseUrl;
+
+    @Value("${app.azure.devops.identifiers}")
+    private String azureIdentifiers;
+
+    @Value("${app.github.identifiers}")
+    private String githubIdentifiers;
 
     public void cloneRepository(String repoUrl, String pat, String localPath) throws GitAPIException {
         String sanitizedUrl = sanitizeRepoUrl(repoUrl);
         log.info("Cloning repository {} to {}", sanitizedUrl, localPath);
         
+        // Ensure directory is clean if it exists
+        File dir = new File(localPath);
+        if (dir.exists()) {
+            deleteLockFile(localPath);
+        }
+
         Git.cloneRepository()
                 .setURI(sanitizedUrl)
-                .setDirectory(new File(localPath))
+                .setDirectory(dir)
                 .setCredentialsProvider(getCredentialsProvider(sanitizedUrl, pat))
                 .call()
                 .close();
     }
 
     public void pullChanges(String localPath, String pat) throws IOException, GitAPIException {
+        deleteLockFile(localPath);
         try (Git git = Git.open(new File(localPath))) {
             ensureCleanRemote(git);
             String url = git.getRepository().getConfig().getString("remote", "origin", "url");
@@ -101,6 +115,7 @@ public class GitService {
     }
 
     public void commitAndPush(String localPath, String pat, String message, String branchName, List<String> files) throws IOException, GitAPIException {
+        deleteLockFile(localPath);
         try (Git git = Git.open(new File(localPath))) {
             ensureCleanRemote(git);
             log.info("Committing and pushing changes to branch: {}", branchName);
@@ -124,7 +139,7 @@ public class GitService {
             
             // 3. Ensure Remote URL is authenticated if needed
             String currentUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
-            boolean isAzure = currentUrl != null && (currentUrl.contains("dev.azure.com") || currentUrl.contains("visualstudio.com") || (azureBaseUrl != null && currentUrl.contains(azureBaseUrl.replace("https://", ""))));
+            boolean isAzure = isAzureUrl(currentUrl);
             
             if (isAzure && currentUrl != null && currentUrl.contains("@")) {
                 log.warn("Detected embedded username in Azure remote URL. This may cause 'not authorized' errors. Recommendation: Use a clean URL without '@'.");
@@ -157,6 +172,7 @@ public class GitService {
     }
 
     public void resetChanges(String localPath, java.util.List<String> files, String pat) throws IOException, GitAPIException {
+        deleteLockFile(localPath);
         try (Git git = Git.open(new File(localPath))) {
             if (files == null || files.isEmpty()) {
                 log.info("Performing full deep reset of repository at {}", localPath);
@@ -241,35 +257,60 @@ public class GitService {
 
     public List<String> getAllBranches(String localPath, String pat) throws IOException, GitAPIException {
         try (Git git = Git.open(new File(localPath))) {
-            return git.branchList()
+            // Fetch to ensure we see the latest branches from remote
+            if (pat != null && !pat.isEmpty()) {
+                try {
+                    ensureCleanRemote(git);
+                    String url = git.getRepository().getConfig().getString("remote", "origin", "url");
+                    // Explicitly fetch all heads to ensure remote branches are visible
+                    git.fetch()
+                            .setRemote("origin")
+                            .setRefSpecs(new org.eclipse.jgit.transport.RefSpec("+refs/heads/*:refs/remotes/origin/*"))
+                            .setCredentialsProvider(getCredentialsProvider(url, pat))
+                            .setRemoveDeletedRefs(true)
+                            .call();
+                    log.info("Aggressive fetch completed for {}", localPath);
+                } catch (Exception e) {
+                    log.warn("Fetch failed while listing branches (continuing with local refs): {}", e.getMessage());
+                }
+            }
+            
+            List<org.eclipse.jgit.lib.Ref> rawRefs = git.branchList()
                     .setListMode(org.eclipse.jgit.api.ListBranchCommand.ListMode.ALL)
-                    .call().stream()
+                    .call();
+            
+            log.info("Found {} raw refs in repository at {}", rawRefs.size(), localPath);
+            
+            return rawRefs.stream()
                     .map(ref -> {
                         String name = ref.getName();
                         if (name.startsWith("refs/heads/")) {
                             return name.substring("refs/heads/".length());
                         } else if (name.startsWith("refs/remotes/")) {
-                            // Strip 'refs/remotes/' and then strip the first part (remote name) if it exists
-                            String remoteName = name.substring("refs/remotes/".length());
-                            int slashIndex = remoteName.indexOf('/');
-                            if (slashIndex != -1) {
-                                String branchName = remoteName.substring(slashIndex + 1);
-                                if (!branchName.equals("HEAD")) {
-                                    return branchName;
-                                }
+                            String remotePath = name.substring("refs/remotes/".length());
+                            // Handle origin/branch_name -> branch_name
+                            // If there's multiple slashes (feature/abc), keep everything after the first slash (remote name)
+                            int firstSlash = remotePath.indexOf('/');
+                            if (firstSlash != -1 && firstSlash < remotePath.length() - 1) {
+                                return remotePath.substring(firstSlash + 1);
                             }
-                            return remoteName;
+                            return remotePath;
                         }
                         return name;
                     })
-                    .filter(name -> !name.equals("HEAD") && !name.contains("HEAD"))
+                    .filter(name -> {
+                        boolean keep = !name.equals("HEAD") && !name.contains("/HEAD") && !name.startsWith("tags/");
+                        return keep;
+                    })
                     .distinct()
                     .sorted()
+                    .peek(name -> log.debug("Verified branch: {}", name))
                     .collect(java.util.stream.Collectors.toList());
         }
     }
 
     public String createBranch(String localPath, String branchName, String baseBranch) throws IOException, GitAPIException {
+        deleteLockFile(localPath);
         try (Git git = Git.open(new File(localPath))) {
             log.info("Creating branch '{}' from base '{}'", branchName, baseBranch);
             
@@ -289,6 +330,7 @@ public class GitService {
     }
 
     public void switchBranch(String localPath, String branchName, String pat) throws IOException, GitAPIException {
+        deleteLockFile(localPath);
         try (Git git = Git.open(new File(localPath))) {
             log.info("Saving changes and switching to branch: {}", branchName);
             
@@ -371,11 +413,62 @@ public class GitService {
     }
 
     private UsernamePasswordCredentialsProvider getCredentialsProvider(String url, String pat) {
-        boolean isAzure = url != null && (url.contains("dev.azure.com") || url.contains("visualstudio.com") || (azureBaseUrl != null && url.contains(azureBaseUrl.replace("https://", ""))));
+        boolean isAzure = isAzureUrl(url);
         // For Azure DevOps, an empty username is standard for PATs
         // For GitHub, "token" is often used but empty can also work. 
         // We'll stick to "" for Azure and "token" for others as it's proven.
         String username = isAzure ? "" : "token";
         return new UsernamePasswordCredentialsProvider(username, pat);
+    }
+
+    public boolean isAzureUrl(String url) {
+        if (url == null) return false;
+        String[] parts = azureIdentifiers.split(",");
+        for (String part : parts) {
+            if (url.contains(part.trim())) return true;
+        }
+        if (azureBaseUrl != null && url.contains(azureBaseUrl.replace("https://", ""))) return true;
+        return false;
+    }
+
+    public boolean isGithubUrl(String url) {
+        if (url == null) return false;
+        String[] parts = githubIdentifiers.split(",");
+        for (String part : parts) {
+            if (url.contains(part.trim())) return true;
+        }
+        if (githubBaseUrl != null && url.contains(githubBaseUrl.replace("https://", ""))) return true;
+        return false;
+    }
+
+    /**
+     * Helper to remove stale git lock files that prevent operations.
+     * Recursively searches the .git directory for any .lock files.
+     */
+    private void deleteLockFile(String localPath) {
+        try {
+            File gitDir = new File(localPath, ".git");
+            if (!gitDir.exists()) return;
+            cleanLocks(gitDir);
+        } catch (Exception e) {
+            log.error("Error during git lock cleanup", e);
+        }
+    }
+
+    private void cleanLocks(File dir) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                cleanLocks(file);
+            } else if (file.getName().endsWith(".lock")) {
+                log.warn("Stale git lock file found: {}. Removing...", file.getAbsolutePath());
+                if (!file.delete()) {
+                    log.error("Failed to delete lock file: {}", file.getAbsolutePath());
+                    file.deleteOnExit();
+                }
+            }
+        }
     }
 }

@@ -10,8 +10,8 @@ export const useAppLogic = () => {
     const [tree, setTree] = useState<FileNode[]>([]);
     const [currentFile, setCurrentFile] = useState<string | null>(null);
     const [content, setContent] = useState('');
-    const [currentBranch, setCurrentBranch] = useState<string>('main');
-    const [availableBranches, setAvailableBranches] = useState<string[]>(['main']);
+    const [currentBranch, setCurrentBranch] = useState<string>('');
+    const [availableBranches, setAvailableBranches] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [targetFolder, setTargetFolder] = useState('/');
@@ -69,10 +69,28 @@ export const useAppLogic = () => {
                     featureService.getCurrentBranch(repoUrl),
                     featureService.getAllBranches(repoUrl)
                 ]);
-                setCurrentBranch(branchRes.data);
-                setAvailableBranches(branchesRes.data);
+                const detectedBranch = branchRes.data;
+                const branches = branchesRes.data || [];
+
+                setAvailableBranches(branches);
+
+                if (detectedBranch) {
+                    setCurrentBranch(detectedBranch);
+                } else if (branches.length > 0) {
+                    // Fallback to first available branch if detection fails
+                    setCurrentBranch(branches[0]);
+                } else {
+                    // Last resort fallback
+                    setCurrentBranch('master');
+                }
             } catch (e) {
                 console.error('Failed to get branches', e);
+                // Try to fallback even on error
+                if (availableBranches.length > 0) {
+                    setCurrentBranch(availableBranches[0]);
+                } else {
+                    setCurrentBranch('master');
+                }
             }
         } catch (e) {
             showStatus('Failed to load project tree', 'error');
@@ -95,8 +113,8 @@ export const useAppLogic = () => {
             await featureService.saveFile(repoUrl, currentFile, content);
             showStatus('File saved locally', 'success');
             refreshTree();
-        } catch (e) {
-            showStatus('Failed to save file', 'error');
+        } catch (e: any) {
+            showStatus(`Failed to save file: ${e.response?.data || e.message}`, 'error');
         }
     }, [repoUrl, currentFile, content, refreshTree]);
 

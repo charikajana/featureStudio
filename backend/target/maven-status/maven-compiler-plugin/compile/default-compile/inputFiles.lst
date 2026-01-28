@@ -25,6 +25,7 @@ C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backen
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\UserRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\config\CacheConfig.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\model\TestCaseTrend.java
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\model\ScenarioConfiguration.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\controller\PipelineController.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\ScenarioResultRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\BackendApplication.java
@@ -33,4 +34,5 @@ C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backen
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\model\GitRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\EncryptionService.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\PipelineService.java
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\ScenarioConfigurationRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\StabilityService.java

@@ -25,8 +25,12 @@ public class StabilityService {
 
     public StabilityStats calculateStability(String repoUrl, String branch, String username) {
         String normalizedUrl = normalizeRepoUrl(repoUrl);
-        // Now fetching GLOBAL results for the repo, ignoring branch filters
-        List<ScenarioResult> results = scenarioResultRepository.findByRepoUrl(normalizedUrl);
+        List<ScenarioResult> results;
+        if (branch != null && !branch.isEmpty()) {
+            results = scenarioResultRepository.findByRepoUrlAndBranch(normalizedUrl, branch);
+        } else {
+            results = scenarioResultRepository.findByRepoUrl(normalizedUrl);
+        }
         
         // AUTO-BACKFILL: If still empty, pull from Azure
         if (results.isEmpty()) {
@@ -43,7 +47,7 @@ public class StabilityService {
                     .build();
         }
 
-        String actualBranch = "Global Context";
+        String actualBranch = (branch != null && !branch.isEmpty()) ? branch : "Global Context";
 
         // Group by Scenario
         Map<String, List<ScenarioResult>> scenarioGroups = results.stream()
@@ -160,9 +164,14 @@ public class StabilityService {
                 .build();
     }
 
-    public com.editor.backend.dto.PagedStabilityResponse getPaginatedStability(String repoUrl, int page, int size, String search, boolean flakyOnly) {
+    public com.editor.backend.dto.PagedStabilityResponse getPaginatedStability(String repoUrl, String branch, int page, int size, String search, boolean flakyOnly) {
         String normalizedUrl = normalizeRepoUrl(repoUrl);
-        List<ScenarioResult> results = scenarioResultRepository.findByRepoUrl(normalizedUrl);
+        List<ScenarioResult> results;
+        if (branch != null && !branch.isEmpty()) {
+            results = scenarioResultRepository.findByRepoUrlAndBranch(normalizedUrl, branch);
+        } else {
+            results = scenarioResultRepository.findByRepoUrl(normalizedUrl);
+        }
         
         if (results.isEmpty()) {
             return com.editor.backend.dto.PagedStabilityResponse.builder()

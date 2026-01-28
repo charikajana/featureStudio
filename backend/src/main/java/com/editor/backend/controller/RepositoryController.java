@@ -46,12 +46,14 @@ public class RepositoryController {
                     log.info("Sanitized repository URL from {} to {}", rawUrl, sanitizedUrl);
                 }
             }
-            request.setRepositoryUrl(sanitizedUrl);
+            String repoUrl = request.getRepositoryUrl();
+            if (repoUrl.endsWith("/")) repoUrl = repoUrl.substring(0, repoUrl.length() - 1);
+            request.setRepositoryUrl(repoUrl);
 
-            String localPath = workspaceService.getRepoPath(username, request.getRepositoryUrl());
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
             File repoDir = new File(localPath);
             
-            Optional<GitRepository> existing = gitRepoRepository.findByUsernameAndRepositoryUrl(username, request.getRepositoryUrl());
+            Optional<GitRepository> existing = findGitRepo(username, repoUrl);
             
             if (repoDir.exists() && repoDir.isDirectory()) {
                 File gitDir = new File(repoDir, ".git");
@@ -82,7 +84,7 @@ public class RepositoryController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             String selectedTokenEncrypted = user.getGithubToken();
-            if (request.getRepositoryUrl().contains("dev.azure.com") || request.getRepositoryUrl().contains("visualstudio.com")) {
+            if (gitService.isAzureUrl(request.getRepositoryUrl())) {
                 if (user.getAzurePat() != null && !user.getAzurePat().isEmpty()) {
                     selectedTokenEncrypted = user.getAzurePat();
                 } else {
@@ -114,14 +116,15 @@ public class RepositoryController {
     public ResponseEntity<String> resetRepository(@RequestHeader("X-Username") String username,
                                                   @RequestBody com.editor.backend.dto.ResetRequest request) {
         try {
-            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, request.getRepoUrl());
+            Optional<GitRepository> gitRepoOpt = findGitRepo(username, request.getRepoUrl());
             if (gitRepoOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Repository not found for user");
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
-            gitService.resetChanges(gitRepo.getLocalPath(), request.getFiles(), pat);
+            String localPath = workspaceService.getRepoPath(username, request.getRepoUrl());
+            gitService.resetChanges(localPath, request.getFiles(), pat);
             
             return ResponseEntity.ok("Repository reset/undo successful");
         } catch (Exception e) {
@@ -134,9 +137,31 @@ public class RepositoryController {
     public ResponseEntity<String> syncRepository(@RequestHeader("X-Username") String username,
                                                  @RequestParam String repoUrl) {
         try {
+            String normalizedUrl = repoUrl.trim();
+            if (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
+            
+            // Try looking up with both the original and potentially normalized URL
             Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
             if (gitRepoOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Repository not found for user");
+                gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
+            }
+            if (gitRepoOpt.isEmpty()) {
+                gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl + ".git");
+            }
+            
+            if (gitRepoOpt.isEmpty()) {
+                log.warn("Sync failed. Looked for '{}' in DB for user '{}', but no record found.", repoUrl, username);
+                
+                // Diagnostic: Log all repos for this user to help see if there's a typo
+                java.util.List<GitRepository> allUserRepos = gitRepoRepository.findByUsername(username);
+                log.info("User '{}' has {} repositories registered.", username, allUserRepos.size());
+                for (GitRepository r : allUserRepos) {
+                    log.info(" - Registered URL: {}", r.getRepositoryUrl());
+                }
+
+                return ResponseEntity.badRequest().body("Repository not found in backend database. " +
+                    "Since you re-cloned the project, you must re-register this repository. " +
+                    "Go to the 'Workspace' tab and click 'Clone' for this repository again.");
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
@@ -145,7 +170,7 @@ public class RepositoryController {
             User user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
-            String latestPatEncrypted = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")
+            String latestPatEncrypted = gitService.isAzureUrl(repoUrl)
                     ? user.getAzurePat()
                     : user.getGithubToken();
             
@@ -157,8 +182,11 @@ public class RepositoryController {
 
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
             
+            // Normalize path for Windows compatibility and to bypass stale database paths
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
+            
             // 1. Sync Files from Git
-            gitService.pullChanges(gitRepo.getLocalPath(), pat);
+            gitService.pullChanges(localPath, pat);
             
             // 2. Sync Execution Results from Azure DevOps (Telemetry)
             // This ensures "Performance Analysis" and "Stability Explorer" are updated immediately
@@ -181,13 +209,14 @@ public class RepositoryController {
     public ResponseEntity<String> getCurrentBranch(@RequestHeader("X-Username") String username,
                                                    @RequestParam String repoUrl) {
         try {
-            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+            Optional<GitRepository> gitRepoOpt = findGitRepo(username, repoUrl);
             if (gitRepoOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Repository not found for user");
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
-            String branch = gitService.getCurrentBranch(gitRepo.getLocalPath());
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
+            String branch = gitService.getCurrentBranch(localPath);
             
             return ResponseEntity.ok(branch);
         } catch (Exception e) {
@@ -200,7 +229,7 @@ public class RepositoryController {
     public ResponseEntity<?> getAllBranches(@RequestHeader("X-Username") String username,
                                            @RequestParam String repoUrl) {
         try {
-            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+            Optional<GitRepository> gitRepoOpt = findGitRepo(username, repoUrl);
             if (gitRepoOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Repository not found for user");
             }
@@ -210,7 +239,7 @@ public class RepositoryController {
             // Refresh PAT from user record
             User user = userRepository.findByEmail(username).orElse(null);
             if (user != null) {
-                String latestPat = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")
+                String latestPat = gitService.isAzureUrl(repoUrl)
                         ? user.getAzurePat() : user.getGithubToken();
                 if (latestPat != null && !latestPat.equals(gitRepo.getPersonalAccessToken())) {
                     gitRepo.setPersonalAccessToken(latestPat);
@@ -219,7 +248,8 @@ public class RepositoryController {
             }
 
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
-            java.util.List<String> branches = gitService.getAllBranches(gitRepo.getLocalPath(), pat);
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
+            java.util.List<String> branches = gitService.getAllBranches(localPath, pat);
             
             return ResponseEntity.ok(branches);
         } catch (Exception e) {
@@ -234,13 +264,14 @@ public class RepositoryController {
                                               @RequestParam String branchName,
                                               @RequestParam String baseBranch) {
         try {
-            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+            Optional<GitRepository> gitRepoOpt = findGitRepo(username, repoUrl);
             if (gitRepoOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Repository not found for user");
             }
             
             GitRepository gitRepo = gitRepoOpt.get();
-            String createdBranch = gitService.createBranch(gitRepo.getLocalPath(), branchName, baseBranch);
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
+            String createdBranch = gitService.createBranch(localPath, branchName, baseBranch);
             
             return ResponseEntity.ok(createdBranch);
         } catch (Exception e) {
@@ -267,7 +298,8 @@ public class RepositoryController {
             if (gitRepoOpt.isPresent()) {
                 GitRepository repo = gitRepoOpt.get();
                 // Clean up local files
-                deleteDirectory(new File(repo.getLocalPath()));
+                String localPath = workspaceService.getRepoPath(username, repoUrl);
+                deleteDirectory(new File(localPath));
                 // Remove from DB
                 gitRepoRepository.delete(repo);
                 return ResponseEntity.ok("Repository metadata and local files deleted.");
@@ -284,7 +316,7 @@ public class RepositoryController {
                                               @RequestParam String repoUrl,
                                               @RequestParam String branchName) {
         try {
-            Optional<GitRepository> gitRepoOpt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+            Optional<GitRepository> gitRepoOpt = findGitRepo(username, repoUrl);
             if (gitRepoOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Repository not found for user");
             }
@@ -294,7 +326,7 @@ public class RepositoryController {
             // Refresh PAT from user record
             User user = userRepository.findByEmail(username).orElse(null);
             if (user != null) {
-                String latestPat = repoUrl.contains("dev.azure.com") || repoUrl.contains("visualstudio.com")
+                String latestPat = gitService.isAzureUrl(repoUrl)
                         ? user.getAzurePat() : user.getGithubToken();
                 if (latestPat != null && !latestPat.equals(gitRepo.getPersonalAccessToken())) {
                     gitRepo.setPersonalAccessToken(latestPat);
@@ -303,7 +335,8 @@ public class RepositoryController {
             }
 
             String pat = encryptionService.decrypt(gitRepo.getPersonalAccessToken());
-            gitService.switchBranch(gitRepo.getLocalPath(), branchName, pat);
+            String localPath = workspaceService.getRepoPath(username, repoUrl);
+            gitService.switchBranch(localPath, branchName, pat);
             
             return ResponseEntity.ok(branchName);
         } catch (Exception e) {
@@ -340,5 +373,20 @@ public class RepositoryController {
             }
         }
         directory.delete();
+    }
+
+    private Optional<GitRepository> findGitRepo(String username, String repoUrl) {
+        String normalizedUrl = repoUrl.trim();
+        if (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
+        
+        Optional<GitRepository> opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, repoUrl);
+        if (opt.isEmpty()) {
+            opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, normalizedUrl);
+        }
+        if (opt.isEmpty()) {
+            String alt = normalizedUrl.endsWith(".git") ? normalizedUrl.substring(0, normalizedUrl.length() - 4) : normalizedUrl + ".git";
+            opt = gitRepoRepository.findByUsernameAndRepositoryUrl(username, alt);
+        }
+        return opt;
     }
 }
