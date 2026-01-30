@@ -493,8 +493,7 @@ export const PipelineExecutionView: FC<PipelineExecutionViewProps> = ({
                                                                         #ef4444 ${(run.testsPassed! / run.testsTotal!) * 100}% ${((run.testsPassed! + (run.testsFailed! || 0)) / run.testsTotal!) * 100}%,
                                                                         #94a3b8 ${((run.testsPassed! + (run.testsFailed! || 0)) / run.testsTotal!) * 100}% 100%
                                                                     )`,
-                                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-                                                                    cursor: 'help'
+                                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
                                                                 }} />
                                                             </Tooltip>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

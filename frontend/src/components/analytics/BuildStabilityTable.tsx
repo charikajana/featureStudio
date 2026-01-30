@@ -9,8 +9,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Tooltip,
-    LinearProgress
+    Tooltip
 } from '@mui/material';
 import ShieldIcon from '@mui/icons-material/Shield';
 
@@ -80,38 +79,53 @@ export const BuildStabilityTable: React.FC<BuildStabilityTableProps> = ({ runs }
                                     </Typography>
                                 </TableCell>
                                 <TableCell align="center" sx={{ py: 2, borderBottom: '1px solid #f1f5f9' }}>
-                                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                        <Tooltip title={`${run.passedCount} Passed`}>
-                                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#22c55e' }} />
+                                    <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'center' }}>
+                                        <Tooltip title={`${run.passedCount} Passed`} arrow>
+                                            <Box sx={{
+                                                width: 10,
+                                                height: 10,
+                                                borderRadius: '50%',
+                                                bgcolor: '#10b981',
+                                                boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)',
+                                                border: '2px solid white'
+                                            }} />
                                         </Tooltip>
                                         {run.failedCount > 0 && (
-                                            <Tooltip title={`${run.failedCount} Failed`}>
-                                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#ef4444' }} />
+                                            <Tooltip title={`${run.failedCount} Failed`} arrow>
+                                                <Box sx={{
+                                                    width: 10,
+                                                    height: 10,
+                                                    borderRadius: '50%',
+                                                    bgcolor: '#ef4444',
+                                                    boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)',
+                                                    border: '2px solid white'
+                                                }} />
                                             </Tooltip>
                                         )}
                                     </Box>
                                 </TableCell>
                                 <TableCell align="right" sx={{ py: 2, borderBottom: '1px solid #f1f5f9' }}>
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.75 }}>
                                         <Typography variant="body2" sx={{
-                                            fontWeight: 900,
-                                            color: run.stabilityScore >= 90 ? '#22c55e' : run.stabilityScore >= 70 ? '#f59e0b' : '#ef4444'
+                                            fontWeight: 950,
+                                            fontSize: '0.9rem',
+                                            color: run.stabilityScore >= 90 ? '#10b981' : run.stabilityScore >= 70 ? '#f59e0b' : '#ef4444'
                                         }}>
                                             {run.stabilityScore}%
                                         </Typography>
-                                        <LinearProgress
-                                            variant="determinate"
-                                            value={run.stabilityScore}
-                                            sx={{
-                                                width: 60,
-                                                height: 4,
-                                                borderRadius: 2,
-                                                bgcolor: '#f1f5f9',
-                                                '& .MuiLinearProgress-bar': {
-                                                    bgcolor: run.stabilityScore >= 90 ? '#22c55e' : run.stabilityScore >= 70 ? '#f59e0b' : '#ef4444'
-                                                }
-                                            }}
-                                        />
+                                        <Box sx={{ width: 80, height: 6, bgcolor: '#f1f5f9', borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
+                                            <Box sx={{
+                                                width: `${run.stabilityScore}%`,
+                                                height: '100%',
+                                                borderRadius: 3,
+                                                background: run.stabilityScore >= 90
+                                                    ? 'linear-gradient(90deg, #10b981, #34d399)'
+                                                    : run.stabilityScore >= 70
+                                                        ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                                                        : 'linear-gradient(90deg, #ef4444, #f87171)',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                            }} />
+                                        </Box>
                                     </Box>
                                 </TableCell>
                             </TableRow>

@@ -3,7 +3,8 @@ import {
     Box,
     Typography,
     Paper,
-    Button
+    Button,
+    alpha
 } from '@mui/material';
 
 interface RunSummary {
@@ -94,6 +95,17 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                             <stop offset="0%" stopColor="#94a3b8" />
                             <stop offset="100%" stopColor="#64748b" />
                         </linearGradient>
+                        <filter id="neonBlur" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                        </linearGradient>
                     </defs>
 
                     {/* Axis Labels and Grid */}
@@ -103,13 +115,13 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
 
                         return (
                             <g>
-                                <text x="15" y="200" textAnchor="middle" transform="rotate(-90 15,200)" fill="#64748b" style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Total Tests</text>
+                                <text x="15" y="200" textAnchor="middle" transform="rotate(-90 15,200)" fill="#64748b" style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>Total Tests</text>
                                 {ticks.map((tickValue) => {
                                     const y = 350 - (tickValue / maxTests) * 300;
                                     return (
                                         <g key={`l-tick-${tickValue}`}>
-                                            <line x1="45" y1={y} x2="755" y2={y} stroke="#f1f5f9" strokeWidth="1" strokeDasharray={tickValue === 0 ? "0" : "5,5"} />
-                                            <text x="38" y={y} textAnchor="end" dominantBaseline="middle" fill="#94a3b8" style={{ fontSize: '11px', fontWeight: 900 }}>{tickValue}</text>
+                                            <line x1="45" y1={y} x2="755" y2={y} stroke="#f1f5f9" strokeWidth="1" strokeDasharray={tickValue === 0 ? "0" : "8,8"} />
+                                            <text x="38" y={y} textAnchor="end" dominantBaseline="middle" fill="#94a3b8" style={{ fontSize: '10px', fontWeight: 700 }}>{tickValue}</text>
                                         </g>
                                     );
                                 })}
@@ -121,7 +133,7 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                         const trendPoints: { x: number, y: number }[] = [];
                         const maxTotal = Math.max(...recentRuns.map((r: any) => r.passedCount + r.failedCount + r.skippedCount)) || 1;
                         const barGap = (680 / recentRuns.length);
-                        const barWidth = Math.min(55, barGap * 0.75);
+                        const barWidth = Math.min(48, barGap * 0.7);
 
                         recentRuns.forEach((run, idx) => {
                             const x = 60 + (idx * barGap);
@@ -139,26 +151,24 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                                     const hSkipped = (run.skippedCount / maxTotal) * 300;
 
                                     return (
-                                        <g
-                                            key={`bar-${run.runId}`}
-                                            onMouseEnter={() => setHoveredRunIndex(idx)}
-                                            onMouseLeave={() => setHoveredRunIndex(null)}
-                                            onClick={() => run.url ? window.open(run.url, '_blank') : console.warn('No build URL available for run', run.runId)}
-                                            style={{ cursor: run.url ? 'pointer' : 'default' }}
-                                        >
-                                            <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="transparent" />
+                                        <g key={`bar-visual-${run.runId}`} style={{ pointerEvents: 'none' }}>
                                             {hoveredRunIndex === idx && (
-                                                <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="rgba(59, 130, 246, 0.05)" rx="16" />
+                                                <rect x={x - 8} y="40" width={barWidth + 16} height="320" fill="rgba(59, 130, 246, 0.05)" rx="12" />
                                             )}
-                                            <rect x={x} y={350 - hPassed} width={barWidth} height={hPassed} fill="url(#passedPill)" rx={hFailed + hSkipped === 0 ? 8 : 4} />
-                                            {hFailed > 0 && <rect x={x} y={350 - hPassed - hFailed} width={barWidth} height={hFailed} fill="url(#failedPill)" rx={hSkipped === 0 ? 8 : 4} stroke="white" strokeWidth="1" />}
-                                            {hSkipped > 0 && <rect x={x} y={350 - hPassed - hFailed - hSkipped} width={barWidth} height={hSkipped} fill="url(#skippedPill)" rx={8} stroke="white" strokeWidth="1" />}
+
+                                            {/* Bar Shadows for Depth */}
+                                            <rect x={x} y={350 - hPassed} width={barWidth} height={hPassed} fill="rgba(0,0,0,0.05)" transform="translate(2, 2)" rx={4} />
+
+                                            <rect x={x} y={350 - hPassed} width={barWidth} height={hPassed} fill="url(#passedPill)" rx={(hFailed + hSkipped) === 0 ? 10 : 4} style={{ transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+                                            {hFailed > 0 && <rect x={x} y={350 - hPassed - hFailed} width={barWidth} height={hFailed} fill="url(#failedPill)" rx={(hSkipped) === 0 ? 4 : 2} stroke="white" strokeWidth="0.5" style={{ transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }} />}
+                                            {hSkipped > 0 && <rect x={x} y={350 - hPassed - hFailed - hSkipped} width={barWidth} height={hSkipped} fill="url(#skippedPill)" rx={10} stroke="white" strokeWidth="0.5" style={{ transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }} />}
+
                                             <text
                                                 x={x + barWidth / 2}
                                                 y={380}
                                                 textAnchor="middle"
-                                                fill={hoveredRunIndex === idx ? "#0f172a" : "#cbd5e1"}
-                                                style={{ fontSize: '11px', fontWeight: 900, transition: 'all 0.2s' }}
+                                                fill={hoveredRunIndex === idx ? "#0f172a" : "#94a3b8"}
+                                                style={{ fontSize: '10px', fontWeight: 900, transition: 'all 0.2s', letterSpacing: '0.5px' }}
                                             >
                                                 #{run.runId}
                                             </text>
@@ -166,65 +176,119 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                                     );
                                 })}
 
-                                {/* Trend Line */}
+                                {/* Area Fill under Trend Line */}
                                 {showPassRate && trendPoints.length > 1 && (
-                                    <g>
+                                    <path
+                                        d={`M ${trendPoints[0].x},350 ` + trendPoints.map(p => `L ${p.x},${p.y}`).join(' ') + ` L ${trendPoints[trendPoints.length - 1].x},350 Z`}
+                                        fill="url(#areaGradient)"
+                                        style={{ transition: 'all 0.6s ease', pointerEvents: 'none' }}
+                                    />
+                                )}
+
+                                {/* Trend Line with Glow */}
+                                {showPassRate && trendPoints.length > 1 && (
+                                    <g style={{ pointerEvents: 'none' }}>
                                         <path
                                             d={`M ${trendPoints[0].x},${trendPoints[0].y} ` + trendPoints.slice(1).map(p => `L ${p.x},${p.y}`).join(' ')}
                                             fill="none"
                                             stroke="#3b82f6"
-                                            strokeWidth="5"
+                                            strokeWidth="4"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
-                                            style={{ filter: 'drop-shadow(0px 8px 12px rgba(99,102,241,0.4))', transition: 'all 0.6s ease' }}
+                                            filter="url(#neonBlur)"
+                                            style={{ transition: 'all 0.6s ease', opacity: 0.8 }}
                                         />
                                         {trendPoints.map((p, i) => (
                                             <circle
                                                 key={`point-${i}`}
                                                 cx={p.x}
                                                 cy={p.y}
-                                                r={hoveredRunIndex === i ? 9 : 6}
+                                                r={hoveredRunIndex === i ? 8 : 5}
                                                 fill="white"
                                                 stroke="#3b82f6"
-                                                strokeWidth="4"
-                                                style={{ transition: 'all 0.25s ease' }}
+                                                strokeWidth="3"
+                                                style={{ transition: 'all 0.25s ease', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }}
                                             />
                                         ))}
                                     </g>
                                 )}
 
-                                {!showVolume && recentRuns.map((run, idx) => {
+                                {/* Dedicated Hitboxes for Global Interactivity */}
+                                {recentRuns.map((run, idx) => {
                                     const x = 60 + (idx * barGap);
+                                    const hitboxWidth = idx === 0 || idx === recentRuns.length - 1 ? barGap * 0.8 : barGap;
+                                    const hitboxX = idx === 0 ? 40 : x - (barGap / 2);
+
                                     return (
-                                        <g key={`hitbox-${run.runId}`} onMouseEnter={() => setHoveredRunIndex(idx)} onMouseLeave={() => setHoveredRunIndex(null)} onClick={() => run.url && window.open(run.url, '_blank')} style={{ cursor: run.url ? 'pointer' : 'default' }}>
-                                            <rect x={x} y="40" width={barWidth} height="310" fill="transparent" />
-                                            <text x={x + barWidth / 2} y={380} textAnchor="middle" fill={hoveredRunIndex === idx ? "#0f172a" : "#cbd5e1"} style={{ fontSize: '11px', fontWeight: 900 }}>#{run.runId}</text>
-                                        </g>
+                                        <rect
+                                            key={`hitbox-${run.runId}`}
+                                            x={hitboxX}
+                                            y="40"
+                                            width={hitboxWidth}
+                                            height="330"
+                                            fill="transparent"
+                                            onMouseEnter={() => setHoveredRunIndex(idx)}
+                                            onMouseLeave={() => setHoveredRunIndex(null)}
+                                            onClick={() => run.url ? window.open(run.url, '_blank') : console.warn('Building URL missing for Run', run.runId)}
+                                            style={{ cursor: run.url ? 'pointer' : 'default' }}
+                                        />
                                     );
                                 })}
 
-                                {/* Tooltip Positioning */}
                                 {hoveredRunIndex !== null && (() => {
                                     const run = recentRuns[hoveredRunIndex];
                                     const barX = 60 + (hoveredRunIndex * barGap);
                                     const total = run.passedCount + run.failedCount + run.skippedCount;
                                     const passRate = ((run.passedCount / Math.max(1, total)) * 100).toFixed(1);
 
-                                    let tooltipX = barX - 60;
+                                    // Calculate top position of the bar to place tooltip immediately above it
+                                    const barTop = 350 - (total / maxTotal) * 300;
+                                    const tooltipHeight = 150;
+                                    let tooltipY = barTop - tooltipHeight - 15;
+                                    if (tooltipY < 10) tooltipY = 10; // Bounds check
+
+                                    let tooltipX = barX + (barWidth / 2) - 100;
                                     if (tooltipX < 10) tooltipX = 10;
-                                    if (tooltipX > 620) tooltipX = 620;
+                                    if (tooltipX > 610) tooltipX = 610;
 
                                     return (
-                                        <foreignObject x={tooltipX} y={20} width="175" height="135" style={{ pointerEvents: 'none' }}>
-                                            <Paper elevation={12} sx={{ p: 1.5, bgcolor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(8px)', color: 'white', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                                <Typography sx={{ fontSize: '11px', fontWeight: 900, mb: 0.8, borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 0.5 }}>BUILD #{run.runId}</Typography>
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>Passed</Typography><Typography sx={{ fontSize: '10px', fontWeight: 900 }}>{run.passedCount}</Typography></Box>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '10px', color: '#ef4444', fontWeight: 600 }}>Failed</Typography><Typography sx={{ fontSize: '10px', fontWeight: 900 }}>{run.failedCount}</Typography></Box>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Skipped</Typography><Typography sx={{ fontSize: '10px', fontWeight: 900 }}>{run.skippedCount || 0}</Typography></Box>
-                                                    <Box sx={{ mt: 1, pt: 0.5, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between' }}>
-                                                        <Typography sx={{ fontSize: '10px', fontWeight: 700 }}>Pass Rate</Typography>
-                                                        <Typography sx={{ fontSize: '10px', fontWeight: 900, color: '#3b82f6' }}>{passRate}%</Typography>
+                                        <foreignObject x={tooltipX} y={tooltipY} width="200" height={tooltipHeight + 20} style={{ pointerEvents: 'none', transition: 'all 0.3s ease-out' }}>
+                                            <Paper
+                                                elevation={0}
+                                                sx={{
+                                                    p: 1.5,
+                                                    bgcolor: 'rgba(15, 23, 42, 0.95)',
+                                                    backdropFilter: 'blur(16px)',
+                                                    color: 'white',
+                                                    borderRadius: '16px',
+                                                    border: '1px solid rgba(255,255,255,0.15)',
+                                                    boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+                                                    position: 'relative'
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2 }}>
+                                                    <Typography sx={{ fontSize: '10px', fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '1px' }}>Build Metrics</Typography>
+                                                    <Typography sx={{ fontSize: '11px', fontWeight: 950, bgcolor: 'rgba(59, 130, 246, 0.2)', px: 0.8, py: 0.2, borderRadius: '4px', color: '#60a5fa' }}>#{run.runId}</Typography>
+                                                </Box>
+
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                                                    {[
+                                                        { label: 'Passed', val: run.passedCount, color: '#10b981' },
+                                                        { label: 'Failed', val: run.failedCount, color: '#ef4444' },
+                                                        { label: 'Skipped', val: run.skippedCount || 0, color: '#94a3b8' }
+                                                    ].map((row) => (
+                                                        <Box key={row.label} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: row.color, boxShadow: `0 0 4px ${row.color}` }} />
+                                                                <Typography sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>{row.label}</Typography>
+                                                            </Box>
+                                                            <Typography sx={{ fontSize: '11px', fontWeight: 900 }}>{row.val}</Typography>
+                                                        </Box>
+                                                    ))}
+
+                                                    <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                                        <Typography sx={{ fontSize: '10px', fontWeight: 950, color: 'rgba(255,255,255,0.5)' }}>PASS RATE</Typography>
+                                                        <Typography sx={{ fontWeight: 950, color: 'white', fontSize: '1.2rem', lineHeight: 1 }}>{passRate}<span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: '8px' }}>%</span></Typography>
                                                     </Box>
                                                 </Box>
                                             </Paper>
@@ -237,15 +301,29 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                 </svg>
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5, mt: 5, pb: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 5, pb: 1 }}>
                 {[
-                    { grad: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', l: 'Passed' },
-                    { grad: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', l: 'Failed' },
-                    { grad: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', l: 'Skipped' }
+                    { grad: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', l: 'Passed', color: '#10b981' },
+                    { grad: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', l: 'Failed', color: '#f43f5e' },
+                    { grad: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', l: 'Skipped', color: '#94a3b8' }
                 ].map(leg => (
-                    <Box key={leg.l} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1, borderRadius: '12px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                        <Box sx={{ width: 12, height: 12, borderRadius: '50%', background: leg.grad, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
-                        <Typography variant="caption" sx={{ fontWeight: 900, color: '#1e293b', textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.5px' }}>{leg.l}</Typography>
+                    <Box key={leg.l} sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.2,
+                        px: 2,
+                        py: 0.8,
+                        borderRadius: '30px',
+                        bgcolor: alpha(leg.color, 0.05),
+                        border: `1px solid ${alpha(leg.color, 0.1)}`,
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                            bgcolor: alpha(leg.color, 0.1),
+                            transform: 'translateY(-2px)'
+                        }
+                    }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: leg.grad, boxShadow: `0 0 10px ${alpha(leg.color, 0.4)}` }} />
+                        <Typography variant="caption" sx={{ fontWeight: 900, color: leg.color, textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.8px' }}>{leg.l}</Typography>
                     </Box>
                 ))}
             </Box>

@@ -79,54 +79,149 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
     const top20Count = Math.ceil(filteredSteps.length * 0.2);
 
     return (
-        <Box sx={{ p: 4, height: '100%', overflowY: 'auto', bgcolor: '#f8fafc', display: 'flex', flexDirection: 'column', gap: 4, '&::-webkit-scrollbar': { width: '8px' }, '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: '4px' } }}>
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{
+            p: 2,
+            height: '100%',
+            overflow: 'hidden',
+            bgcolor: '#f8fafc',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2
+        }}>
+            {/* Unified Header Toolbar: Title + Stats + Search */}
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexShrink: 0,
+                bgcolor: 'white',
+                p: 1.5,
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                gap: 2
+            }}>
+                {/* Left Section: Title Group */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Tooltip title="Back to Analytics">
                         <IconButton
                             onClick={onBack}
-                            sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f1f5f9', transform: 'translateX(-4px)' }, transition: 'all 0.2s', border: '1px solid #e2e8f0' }}
+                            sx={{ bgcolor: '#f8fafc', '&:hover': { bgcolor: '#f1f5f9', transform: 'translateX(-4px)' }, transition: 'all 0.2s', border: '1px solid #e2e8f0', p: 0.8 }}
                         >
-                            <ArrowBackIcon />
+                            <ArrowBackIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                     </Tooltip>
                     <Box sx={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: '18px',
+                        width: 40,
+                        height: 40,
+                        borderRadius: '10px',
                         background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
                         color: 'white',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)'
                     }}>
-                        <FormatListBulletedIcon sx={{ fontSize: 32 }} />
+                        <FormatListBulletedIcon sx={{ fontSize: 22 }} />
                     </Box>
                     <Box>
-                        <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: '#0f172a', lineHeight: 1.1 }}>
-                            Step Intelligence Library
+                        <Typography variant="h5" sx={{ fontWeight: 1000, letterSpacing: '-0.5px', color: '#0f172a', lineHeight: 1 }}>
+                            Step Intelligence
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, mt: 0.5 }}>
-                            Analyzing {data?.allSteps?.length || 0} unique automation components across your project
+                        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block', fontSize: '0.75rem', mt: 0.2 }}>
+                            {data?.allSteps?.length || 0} unique automation components
                         </Typography>
                     </Box>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 2 }}>
+
+                {/* Center Section: Stats Group */}
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                    {/* Total Steps Card */}
+                    <Paper elevation={0} sx={{ px: 2.5, py: 1.5, minWidth: 200, borderRadius: '12px', border: '1px solid #e2e8f0', borderLeft: '7px solid #3b82f6', display: 'flex', alignItems: 'center', gap: 2.5, bgcolor: '#f8fafc' }}>
+                        <Tooltip
+                            arrow
+                            placement="top"
+                            title={
+                                <Box sx={{ p: 1 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>Total Step Definitions</Typography>
+                                    <Typography variant="caption" sx={{ display: 'block' }}>
+                                        Total count of unique Gherkin sentences backed by automation code.
+                                    </Typography>
+                                </Box>
+                            }
+                            slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '10px', maxWidth: 300 } } }}
+                        >
+                            <Box sx={{ color: '#3b82f6', display: 'flex', cursor: 'pointer' }}><LayersIcon sx={{ fontSize: 28 }} /></Box>
+                        </Tooltip>
+                        <Box>
+                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.8rem', lineHeight: 1, display: 'block' }}>Steps</Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 950, lineHeight: 1, mt: 0.5 }}>{data?.allSteps?.length || 0}</Typography>
+                        </Box>
+                    </Paper>
+
+                    {/* ROI Card */}
+                    <Paper elevation={0} sx={{ px: 2.5, py: 1.5, minWidth: 200, borderRadius: '12px', border: '1px solid #e2e8f0', borderLeft: '7px solid #22c55e', display: 'flex', alignItems: 'center', gap: 2.5, bgcolor: '#f8fafc' }}>
+                        <Tooltip
+                            arrow
+                            placement="top"
+                            title={
+                                <Box sx={{ p: 1 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>ROI Efficiency</Typography>
+                                    <Typography variant="caption" sx={{ display: 'block' }}>
+                                        Visualizes the "Workhorse" nature of a step.
+                                    </Typography>
+                                </Box>
+                            }
+                            slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '10px', maxWidth: 300 } } }}
+                        >
+                            <Box sx={{ color: '#22c55e', display: 'flex', cursor: 'pointer' }}><AutoGraphIcon sx={{ fontSize: 28 }} /></Box>
+                        </Tooltip>
+                        <Box>
+                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.8rem', lineHeight: 1, display: 'block' }}>ROI</Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 950, color: '#22c55e', lineHeight: 1, mt: 0.5 }}>{data?.overallStepReuseROI}%</Typography>
+                        </Box>
+                    </Paper>
+
+                    {/* Vital Few Card */}
+                    <Paper elevation={0} sx={{ px: 2.5, py: 1.5, minWidth: 200, borderRadius: '12px', border: '1px solid #e2e8f0', borderLeft: '7px solid #f59e0b', display: 'flex', alignItems: 'center', gap: 2.5, bgcolor: '#f8fafc' }}>
+                        <Tooltip
+                            arrow
+                            placement="top"
+                            title={
+                                <Box sx={{ p: 1 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>The Vital Few</Typography>
+                                    <Typography variant="caption" sx={{ display: 'block' }}>
+                                        The top 20% of your steps driving 80% of execution.
+                                    </Typography>
+                                </Box>
+                            }
+                            slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '10px', maxWidth: 300 } } }}
+                        >
+                            <Box sx={{ color: '#f59e0b', display: 'flex', cursor: 'pointer' }}><FormatListBulletedIcon sx={{ fontSize: 28 }} /></Box>
+                        </Tooltip>
+                        <Box>
+                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.8rem', lineHeight: 1, display: 'block' }}>Vital Few</Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 950, lineHeight: 1, mt: 0.5 }}>{top20Count}</Typography>
+                        </Box>
+                    </Paper>
+                </Box>
+
+                {/* Right Section: Tools */}
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                     <TextField
                         size="small"
-                        placeholder="Search step definition..."
+                        placeholder="Search steps..."
                         value={searchTerm}
                         onChange={(e) => {
                             setSearchTerm(e.target.value);
                             setPage(0);
                         }}
                         sx={{
-                            width: 350,
+                            width: 220,
                             '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                bgcolor: 'white',
+                                borderRadius: '8px',
+                                bgcolor: '#f8fafc',
+                                height: 34,
+                                fontSize: '0.85rem',
                                 '& fieldset': { borderColor: '#e2e8f0' },
                                 '&:hover fieldset': { borderColor: '#cbd5e1' },
                                 '&.Mui-focused fieldset': { borderColor: '#3b82f6' }
@@ -135,149 +230,41 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <SearchIcon sx={{ color: '#94a3b8' }} />
+                                    <SearchIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
                                 </InputAdornment>
                             ),
                         }}
                     />
                     <Button
                         variant="contained"
-                        startIcon={<SyncIcon />}
+                        startIcon={<SyncIcon sx={{ fontSize: 16 }} />}
                         onClick={loadData}
-                        sx={{ borderRadius: '12px', px: 3, bgcolor: '#0f172a', fontWeight: 800, textTransform: 'none', '&:hover': { bgcolor: '#1e293b' } }}
+                        sx={{ borderRadius: '8px', px: 2, height: 34, bgcolor: '#0f172a', fontWeight: 900, textTransform: 'none', fontSize: '0.85rem', '&:hover': { bgcolor: '#1e293b' } }}
                     >
-                        Refresh
+                        Sync
                     </Button>
                 </Box>
             </Box>
 
-            {/* Quick Stats Grid */}
-            <Grid container spacing={3} sx={{ flexShrink: 0 }}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                    <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 2.5 }}>
-                        <Tooltip
-                            arrow
-                            placement="top"
-                            title={
-                                <Box sx={{ p: 1 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>Total Step Definitions</Typography>
-                                    <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                                        Total count of unique Gherkin sentences backed by automation code.
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ display: 'block' }}>
-                                        Framework Health: A lean library with high reuse (ROI) is easier to maintain than a bloated one with thousands of one-off steps.
-                                    </Typography>
-                                </Box>
-                            }
-                            slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '12px', maxWidth: 300 } } }}
-                        >
-                            <Box sx={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: '12px',
-                                bgcolor: 'rgba(59, 130, 246, 0.08)',
-                                color: '#3b82f6',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid rgba(59, 130, 246, 0.1)',
-                                cursor: 'pointer'
-                            }}>
-                                <LayersIcon sx={{ fontSize: 24 }} />
-                            </Box>
-                        </Tooltip>
-                        <Box>
-                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Total Step Definitions</Typography>
-                            <Typography variant="h5" sx={{ fontWeight: 900 }}>{data?.allSteps?.length || 0}</Typography>
-                        </Box>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                    <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 2.5 }}>
-                        <Tooltip
-                            arrow
-                            placement="top"
-                            title={
-                                <Box sx={{ p: 1 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>ROI Efficiency</Typography>
-                                    <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                                        This percentage visualizes the "Workhorse" nature of a step.
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-                                        <strong>83.0% ROI:</strong> Highly efficient; services nearly your entire project.
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ display: 'block' }}>
-                                        <strong>17.0% ROI:</strong> Single-purpose; only used in one scenario.
-                                    </Typography>
-                                </Box>
-                            }
-                            slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '12px', maxWidth: 300 } } }}
-                        >
-                            <Box sx={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: '12px',
-                                bgcolor: 'rgba(34, 197, 94, 0.08)',
-                                color: '#22c55e',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid rgba(34, 197, 94, 0.1)',
-                                cursor: 'pointer'
-                            }}>
-                                <AutoGraphIcon sx={{ fontSize: 24 }} />
-                            </Box>
-                        </Tooltip>
-                        <Box>
-                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Global ROI Score</Typography>
-                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#22c55e' }}>{data?.overallStepReuseROI}%</Typography>
-                        </Box>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                    <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 2.5 }}>
-                        <Tooltip
-                            arrow
-                            placement="top"
-                            title={
-                                <Box sx={{ p: 1 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1 }}>The Vital Few (Pareto Principle)</Typography>
-                                    <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                                        The top 20% of your steps that drive 80% of your test suite's execution.
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, color: '#f59e0b' }}>
-                                        Actionable: Focus your performance and stability fixes here for the highest return on engineering effort.
-                                    </Typography>
-                                </Box>
-                            }
-                            slotProps={{ tooltip: { sx: { bgcolor: '#1e293b', borderRadius: '12px', maxWidth: 300 } } }}
-                        >
-                            <Box sx={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: '12px',
-                                bgcolor: 'rgba(245, 158, 11, 0.08)',
-                                color: '#f59e0b',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid rgba(245, 158, 11, 0.1)',
-                                cursor: 'pointer'
-                            }}>
-                                <FormatListBulletedIcon sx={{ fontSize: 24 }} />
-                            </Box>
-                        </Tooltip>
-                        <Box>
-                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>"Vital Few" Steps</Typography>
-                            <Typography variant="h5" sx={{ fontWeight: 900 }}>{top20Count}</Typography>
-                        </Box>
-                    </Paper>
-                </Grid>
-            </Grid>
+
 
             {/* Main Content Table */}
-            <Paper sx={{ borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', flexShrink: 0 }}>
-                <TableContainer>
+            <Paper sx={{
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0
+            }}>
+                <TableContainer sx={{
+                    flexGrow: 1,
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': { width: '8px' },
+                    '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: '4px' }
+                }}>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
@@ -309,14 +296,15 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                                             <Typography variant="body2" sx={{
                                                 fontFamily: 'JetBrains Mono, monospace',
                                                 color: '#0f172a',
-                                                fontWeight: 700,
-                                                fontSize: '0.95rem',
+                                                fontWeight: 500,
+                                                fontSize: '1.05rem',
                                                 bgcolor: '#f1f5f9',
                                                 px: 2,
                                                 py: 0.8,
                                                 borderRadius: '8px',
                                                 display: 'inline-block',
-                                                border: '1px solid #e2e8f0'
+                                                border: '1px solid #e2e8f0',
+                                                userSelect: 'text' // Allow copying the actual step data
                                             }}>
                                                 {step.stepText}
                                             </Typography>
@@ -337,7 +325,7 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                                         </TableCell>
                                         <TableCell align="right" sx={{ py: 2 }}>
                                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 120 }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 950, color: '#16a34a', fontSize: '0.85rem', mb: 0.5 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 950, color: '#16a34a', fontSize: '0.85rem', mb: 0.5, userSelect: 'text' }}>
                                                     {(step.roiScore * 10).toFixed(1)}%
                                                 </Typography>
                                                 <LinearProgress
@@ -370,7 +358,13 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                         setPage(0);
                     }}
                     rowsPerPageOptions={[25, 50, 100]}
-                    sx={{ borderTop: '1px solid #e2e8f0', bgcolor: 'white' }}
+                    sx={{
+                        borderTop: '1px solid #e2e8f0',
+                        bgcolor: 'white',
+                        flexShrink: 0,
+                        zIndex: 2,
+                        position: 'relative'
+                    }}
                 />
             </Paper>
         </Box>

@@ -274,8 +274,13 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                         py: 1.5,
                                         fontWeight: 800,
                                         bgcolor: '#3b82f6',
+                                        color: 'white',
                                         boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)',
-                                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.4)' }
+                                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.4)' },
+                                        '&.Mui-disabled': {
+                                            bgcolor: alpha('#3b82f6', 0.5),
+                                            color: 'white'
+                                        }
                                     }}
                                 >
                                     {loading ? <CircularProgress size={24} color="inherit" /> : 'Clone Repository'}
@@ -467,8 +472,14 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                         textTransform: 'none',
                                                         fontWeight: 800,
                                                         bgcolor: '#3b82f6',
+                                                        color: 'white',
                                                         boxShadow: 'none',
-                                                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)' }
+                                                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)' },
+                                                        '&.Mui-disabled': {
+                                                            bgcolor: '#3b82f6',
+                                                            color: 'white',
+                                                            opacity: 0.9
+                                                        }
                                                     }}
                                                 >
                                                     {currentRepoUrl === repo.repositoryUrl ? 'Workspace Active' : 'Open'}
