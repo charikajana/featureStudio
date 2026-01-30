@@ -96,7 +96,7 @@ export const CreateFeatureModal: FC<CreateFeatureModalProps> = ({
                             <StepLabel
                                 StepIconProps={{
                                     sx: {
-                                        '&.Mui-active': { color: '#6366f1' },
+                                        '&.Mui-active': { color: '#3b82f6' },
                                         '&.Mui-completed': { color: '#10b981' }
                                     }
                                 }}
@@ -158,13 +158,13 @@ export const CreateFeatureModal: FC<CreateFeatureModalProps> = ({
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: 0.5,
-                                        bgcolor: 'rgba(99, 102, 241, 0.08)',
-                                        color: '#6366f1',
+                                        bgcolor: 'rgba(59, 130, 246, 0.08)',
+                                        color: '#3b82f6',
                                         px: 1, py: 0.5,
                                         borderRadius: 1,
                                         fontWeight: 700,
                                         cursor: 'pointer',
-                                        '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.12)' }
+                                        '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.12)' }
                                     }}
                                     onClick={() => setFeatureName(validation.suggestion)}
                                 >
@@ -220,7 +220,7 @@ export const CreateFeatureModal: FC<CreateFeatureModalProps> = ({
                                                 bgcolor: 'white',
                                                 fontWeight: 800,
                                                 border: '1px solid #e2e8f0',
-                                                color: '#6366f1'
+                                                color: '#3b82f6'
                                             }}
                                         />
                                     ))
@@ -246,7 +246,7 @@ export const CreateFeatureModal: FC<CreateFeatureModalProps> = ({
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
                                     <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Filename</Typography>
-                                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#6366f1' }}>{featureName}{featureName.toLowerCase().endsWith('.feature') ? '' : '.feature'}</Typography>
+                                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#3b82f6' }}>{featureName}{featureName.toLowerCase().endsWith('.feature') ? '' : '.feature'}</Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', pb: 1 }}>
                                     <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Applied Tags</Typography>
@@ -278,8 +278,8 @@ export const CreateFeatureModal: FC<CreateFeatureModalProps> = ({
                         borderRadius: 2,
                         px: 4,
                         fontWeight: 800,
-                        bgcolor: '#6366f1',
-                        '&:hover': { bgcolor: '#4f46e5' }
+                        bgcolor: '#3b82f6',
+                        '&:hover': { bgcolor: '#2563eb' }
                     }}
                 >
                     {activeStep === steps.length - 1 ? 'Generate Feature' : 'Continue'}

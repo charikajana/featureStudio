@@ -227,7 +227,7 @@ export const PushChangesModal: FC<PushChangesModalProps> = ({ open, onClose, onP
                         variant="contained"
                         onClick={handleNext}
                         disabled={files.length === 0 || loading}
-                        sx={{ bgcolor: '#6366f1' }}
+                        sx={{ bgcolor: '#3b82f6' }}
                     >
                         Next
                     </Button>
@@ -237,7 +237,7 @@ export const PushChangesModal: FC<PushChangesModalProps> = ({ open, onClose, onP
                         <Button
                             variant="contained"
                             onClick={handlePushClick}
-                            sx={{ bgcolor: '#6366f1' }}
+                            sx={{ bgcolor: '#3b82f6' }}
                         >
                             Confirm & Push
                         </Button>

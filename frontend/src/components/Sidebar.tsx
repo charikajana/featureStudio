@@ -62,15 +62,15 @@ const SidebarButton: FC<{
             position: 'relative',
             borderRadius: '10px',
             color: active ? 'white' : 'rgba(255,255,255,0.6)',
-            bgcolor: active ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-            border: active ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
-            boxShadow: active ? '0 4px 12px rgba(99, 102, 241, 0.1)' : 'none',
+            bgcolor: active ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+            border: active ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent',
+            boxShadow: active ? '0 4px 12px rgba(59, 130, 246, 0.1)' : 'none',
             transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
                 color: danger ? '#fca5a5' : 'white',
-                bgcolor: active ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255,255,255,0.08)',
+                bgcolor: active ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255,255,255,0.08)',
                 transform: 'translateY(-1px)',
-                boxShadow: active ? '0 6px 16px rgba(99, 102, 241, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
+                boxShadow: active ? '0 6px 16px rgba(59, 130, 246, 0.2)' : '0 4px 12px rgba(0,0,0,0.1)'
             },
             '&:active': {
                 transform: 'scale(0.95)',
@@ -85,9 +85,9 @@ const SidebarButton: FC<{
                 left: -9,
                 width: 3,
                 height: 24,
-                bgcolor: '#6366f1',
+                bgcolor: '#3b82f6',
                 borderRadius: '0 4px 4px 0',
-                boxShadow: '0 0 10px rgba(99, 102, 241, 0.8)'
+                boxShadow: '0 0 10px rgba(59, 130, 246, 0.8)'
             }} />
         )}
     </Box>
@@ -246,7 +246,7 @@ export const Sidebar: FC<SidebarProps> = ({
                 <Box sx={{
                     mt: 1, p: 0.2,
                     borderRadius: '50%',
-                    border: '2px solid rgba(99, 102, 241, 0.4)',
+                    border: '2px solid rgba(59, 130, 246, 0.4)',
                     cursor: 'pointer'
                 }}>
                     <AccountCircleIcon

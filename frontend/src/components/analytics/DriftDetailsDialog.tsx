@@ -77,7 +77,7 @@ export const DriftDetailsDialog: React.FC<DriftDetailsDialogProps> = ({ open, on
                                     value={`${(85 + data.stabilityDrift).toFixed(1)}%`}
                                     sub="Current project health"
                                     icon={SecurityIcon}
-                                    color="#6366f1"
+                                    color="#3b82f6"
                                 />
                                 <MetricCard
                                     label="Stability Drift"

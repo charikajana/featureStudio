@@ -59,7 +59,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress thickness={5} size={60} sx={{ color: '#6366f1' }} />
+                <CircularProgress thickness={5} size={60} sx={{ color: '#3b82f6' }} />
             </Box>
         );
     }
@@ -91,7 +91,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                     bgcolor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0',
                     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
                 }}>
-                    <AccountTreeIcon sx={{ color: '#6366f1', fontSize: 20 }} />
+                    <AccountTreeIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
                     <Box>
                         <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, display: 'block', mb: 0, letterSpacing: '0.5px', fontSize: '0.65rem' }}>
                             GIT CONTEXT
@@ -121,14 +121,14 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                         <Box sx={{
                                             width: 40,
                                             height: 40,
-                                            bgcolor: alpha('#6366f1', 0.08),
+                                            bgcolor: alpha('#3b82f6', 0.08),
                                             borderRadius: '12px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            border: '1px solid rgba(99, 102, 241, 0.1)'
+                                            border: '1px solid rgba(59, 130, 246, 0.1)'
                                         }}>
-                                            <HistoryIcon sx={{ color: '#6366f1', fontSize: 22 }} />
+                                            <HistoryIcon sx={{ color: '#3b82f6', fontSize: 22 }} />
                                         </Box>
                                         <Box sx={{ textAlign: 'left' }}>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>
@@ -144,7 +144,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                             size="small"
                                             variant="text"
                                             onClick={() => onViewAllScenarios?.('all')}
-                                            sx={{ fontWeight: 800, textTransform: 'none', color: '#6366f1', fontSize: '0.75rem' }}
+                                            sx={{ fontWeight: 800, textTransform: 'none', color: '#3b82f6', fontSize: '0.75rem' }}
                                             endIcon={<LaunchIcon sx={{ fontSize: 14 }} />}
                                         >
                                             Deep Dive
@@ -194,7 +194,7 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                                                 zIndex: 10, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
                                                                 pointerEvents: 'none', textAlign: 'center'
                                                             }}>
-                                                                <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.6rem', color: '#818cf8', display: 'block' }}>
+                                                                <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.6rem', color: '#60a5fa', display: 'block' }}>
                                                                     Build #{(stability.executionHistory as any[])[hoveredIndex].runId}
                                                                 </Typography>
                                                                 <Typography variant="caption" sx={{ fontWeight: 800, color: 'white', display: 'block' }}>
@@ -206,8 +206,8 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                                         <svg width="100%" height="100%" viewBox="-20 0 420 100" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                                                             <defs>
                                                                 <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                                                                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
-                                                                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                                                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                                                                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
                                                                 </linearGradient>
                                                             </defs>
                                                             {/* Y-axis labels */}
@@ -227,18 +227,18 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                                                                 d={`M 0,${100 - ((stability.executionHistory as any[])[0].passRate)} ${(stability.executionHistory as any[]).map((v: any, i: number) =>
                                                                     `L ${(i / ((stability.executionHistory as any[]).length - 1)) * 400},${100 - v.passRate}`
                                                                 ).join(' ')}`}
-                                                                fill="none" stroke="#6366f1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                                                                fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                                                             />
                                                             {(stability.executionHistory as any[]).map((v: any, i: number) => (
                                                                 <g key={i}>
                                                                     {hoveredIndex === i && (
-                                                                        <line x1={(i / ((stability.executionHistory as any[]).length - 1)) * 400} y1="0" x2={(i / ((stability.executionHistory as any[]).length - 1)) * 400} y2="100" stroke="#6366f1" strokeWidth="1" strokeDasharray="4" />
+                                                                        <line x1={(i / ((stability.executionHistory as any[]).length - 1)) * 400} y1="0" x2={(i / ((stability.executionHistory as any[]).length - 1)) * 400} y2="100" stroke="#3b82f6" strokeWidth="1" strokeDasharray="4" />
                                                                     )}
                                                                     <circle
                                                                         cx={(i / ((stability.executionHistory as any[]).length - 1)) * 400}
                                                                         cy={100 - v.passRate}
                                                                         r={hoveredIndex === i ? "5" : "3"}
-                                                                        fill="white" stroke="#6366f1" strokeWidth={hoveredIndex === i ? "3" : "2"}
+                                                                        fill="white" stroke="#3b82f6" strokeWidth={hoveredIndex === i ? "3" : "2"}
                                                                     />
                                                                     <rect
                                                                         x={((i / ((stability.executionHistory as any[]).length - 1)) * 400) - 15}
@@ -453,26 +453,26 @@ export const TestStatsView: FC<TestStatsViewProps> = ({ repoUrl, branch, onViewA
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column' }}>
                             <Paper sx={{ p: 3, borderRadius: 5, bgcolor: '#f5f3ff', border: '1px solid #ede9fe', height: '100%', minHeight: 280, display: 'flex', flexDirection: 'column' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#7c3aed' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#60a5fa' }}>
                                     <SentimentVeryDissatisfiedIcon sx={{ fontSize: 20 }} />
                                     <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>How Flakiness is tracked</Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                                     <Box>
                                         <Typography variant="caption" sx={{ fontWeight: 900, color: '#6d28d9', display: 'block', mb: 0.5 }}>TECHNICAL DEBT</Typography>
-                                        <Typography variant="body2" sx={{ color: '#5b21b6', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.5 }}>
+                                        <Typography variant="body2" sx={{ color: '#3b82f6', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.5 }}>
                                             Intermittent failures (pass then fail) represent technical debt that blocks pipeline velocity.
                                         </Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" sx={{ fontWeight: 900, color: '#6d28d9', display: 'block', mb: 0.5 }}>RISK SCORE</Typography>
-                                        <Typography variant="body2" sx={{ color: '#5b21b6', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.5 }}>
+                                        <Typography variant="body2" sx={{ color: '#3b82f6', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.5 }}>
                                             The risk % is derived from the fail count across your recent 10-run execution window.
                                         </Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" sx={{ fontWeight: 900, color: '#6d28d9', display: 'block', mb: 0.5 }}>STABILIZATION</Typography>
-                                        <Typography variant="body2" sx={{ color: '#5b21b6', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.5 }}>
+                                        <Typography variant="body2" sx={{ color: '#3b82f6', fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.5 }}>
                                             High-risk tests should be environment-stabilized to ensure zero false-negatives.
                                         </Typography>
                                     </Box>

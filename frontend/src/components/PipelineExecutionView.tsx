@@ -14,6 +14,7 @@ import {
     TableHead,
     TableRow,
     TablePagination,
+    Tooltip,
     alpha
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -214,7 +215,7 @@ export const PipelineExecutionView: FC<PipelineExecutionViewProps> = ({
                                     '&:hover': {
                                         transform: 'translateY(-2px)',
                                         boxShadow: 3,
-                                        bgcolor: alpha('#6366f1', 0.05)
+                                        bgcolor: alpha('#3b82f6', 0.05)
                                     }
                                 }}
                                 onClick={() => {
@@ -386,7 +387,7 @@ export const PipelineExecutionView: FC<PipelineExecutionViewProps> = ({
                                 </Box>
                                 <Box>
                                     <Typography variant="caption" sx={{ fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', fontSize: '0.65rem' }}>Tests Executed</Typography>
-                                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366f1' }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#3b82f6' }}>
                                         {runs.reduce((sum, r) => sum + (r.testsTotal || 0), 0).toLocaleString()}
                                     </Typography>
                                 </Box>
@@ -479,16 +480,32 @@ export const PipelineExecutionView: FC<PipelineExecutionViewProps> = ({
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                                     {run.testsTotal ? (
                                                         <>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981' }} />
-                                                                <Typography variant="caption" sx={{ fontWeight: 800, color: '#10b981' }}>{run.testsPassed}</Typography>
-                                                            </Box>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444' }} />
-                                                                <Typography variant="caption" sx={{ fontWeight: 800, color: '#ef4444' }}>{run.testsFailed}</Typography>
+                                                            <Tooltip title={`${run.testsPassed} Passed, ${run.testsFailed} Failed, ${run.testsTotal - (run.testsPassed || 0) - (run.testsFailed || 0)} Other`} arrow placement="top">
+                                                                <Box sx={{
+                                                                    width: 28, height: 28,
+                                                                    borderRadius: '50%',
+                                                                    flexShrink: 0,
+                                                                    background: `conic-gradient(
+                                                                        #10b981 0% ${(run.testsPassed! / run.testsTotal!) * 100}%, 
+                                                                        #ef4444 ${(run.testsPassed! / run.testsTotal!) * 100}% ${((run.testsPassed! + (run.testsFailed! || 0)) / run.testsTotal!) * 100}%,
+                                                                        #94a3b8 ${((run.testsPassed! + (run.testsFailed! || 0)) / run.testsTotal!) * 100}% 100%
+                                                                    )`,
+                                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                                                                    cursor: 'help'
+                                                                }} />
+                                                            </Tooltip>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981' }} />
+                                                                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#10b981' }}>{run.testsPassed}</Typography>
+                                                                </Box>
+                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ef4444' }} />
+                                                                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#ef4444' }}>{run.testsFailed}</Typography>
+                                                                </Box>
                                                             </Box>
                                                         </>
                                                     ) : (
@@ -557,7 +574,7 @@ export const PipelineExecutionView: FC<PipelineExecutionViewProps> = ({
                         <Button
                             variant="contained"
                             size="large"
-                            sx={{ borderRadius: '12px', bgcolor: '#6366f1', px: 4, fontWeight: 900 }}
+                            sx={{ borderRadius: '12px', bgcolor: '#3b82f6', px: 4, fontWeight: 900 }}
                             onClick={() => window.location.hash = '#editor'} // Trigger editor view or similar
                         >
                             Orchestrate First Build

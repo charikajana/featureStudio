@@ -112,7 +112,7 @@ export const FeatureEditorView: FC<FeatureEditorViewProps> = ({
                         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
                         transform: 'rotate(-5deg)'
                     }}>
-                        <DescriptionIcon sx={{ fontSize: 48, color: '#6366f1' }} />
+                        <DescriptionIcon sx={{ fontSize: 48, color: '#3b82f6' }} />
                     </Box>
                     <Typography className="brand-font" variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mb: 1, letterSpacing: '-0.5px' }}>
                         Open a Feature File
@@ -168,10 +168,10 @@ export const FeatureEditorView: FC<FeatureEditorViewProps> = ({
                             textTransform: 'none',
                             fontWeight: 700,
                             borderColor: '#e2e8f0',
-                            color: '#6366f1',
+                            color: '#3b82f6',
                             '&:hover': {
-                                bgcolor: 'rgba(99, 102, 241, 0.05)',
-                                borderColor: '#6366f1'
+                                bgcolor: 'rgba(59, 130, 246, 0.05)',
+                                borderColor: '#3b82f6'
                             }
                         }}
                     >

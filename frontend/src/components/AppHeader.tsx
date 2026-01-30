@@ -38,9 +38,10 @@ export const AppHeader: FC<AppHeaderProps> = ({
             position="sticky"
             elevation={0}
             sx={{
-                bgcolor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(8px)',
-                borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                background: 'rgba(255, 255, 255, 0.75)',
+                backdropFilter: 'blur(16px) saturate(180%)',
+                borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
                 zIndex: 1201,
                 top: 0
             }}
@@ -68,14 +69,17 @@ export const AppHeader: FC<AppHeaderProps> = ({
                         sx={{
                             fontWeight: 900,
                             letterSpacing: '-1.5px',
-                            color: '#0f172a',
                             fontSize: '1.5rem',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 0.5
+                            gap: 0.5,
+                            background: 'linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
                         }}
                     >
-                        <Box component="span" sx={{ color: '#6366f1' }}>Feature</Box>Studio
+                        <Box component="span">Feature</Box>Studio
                     </Typography>
                     <Box sx={{ width: '1px', height: 20, bgcolor: '#e2e8f0', mx: 1, display: { xs: 'none', sm: 'block' } }} />
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -126,17 +130,17 @@ export const AppHeader: FC<AppHeaderProps> = ({
                                 onClick={onPush}
                                 disabled={!currentRepoName || !isEditor || isProtectedBranch}
                                 sx={{
-                                    bgcolor: isProtectedBranch ? '#f1f5f9' : '#6366f1',
+                                    bgcolor: isProtectedBranch ? '#f1f5f9' : '#3b82f6',
                                     color: isProtectedBranch ? '#cbd5e1' : 'white',
                                     '&:hover': {
-                                        bgcolor: isProtectedBranch ? '#f1f5f9' : '#4f46e5',
+                                        bgcolor: isProtectedBranch ? '#f1f5f9' : '#2563eb',
                                         transform: isProtectedBranch ? 'none' : 'translateY(-1px)'
                                     },
                                     '&.Mui-disabled': { bgcolor: '#f1f5f9', color: '#cbd5e1' },
                                     borderRadius: '10px',
                                     width: 38,
                                     height: 38,
-                                    boxShadow: isProtectedBranch ? 'none' : '0 4px 6px -1px rgba(99, 102, 241, 0.2)',
+                                    boxShadow: isProtectedBranch ? 'none' : '0 4px 6px -1px rgba(59, 130, 246, 0.2)',
                                     transition: 'all 0.2s'
                                 }}
                             >
@@ -152,9 +156,9 @@ export const AppHeader: FC<AppHeaderProps> = ({
                         disabled={!currentRepoName || (!isEditor && activeView !== 'pipeline')}
                         title="Sync with Remote (Pull)"
                         sx={{
-                            bgcolor: 'rgba(99, 102, 241, 0.05)',
-                            color: '#6366f1',
-                            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.1)', transform: 'translateY(-1px)' },
+                            bgcolor: 'rgba(59, 130, 246, 0.05)',
+                            color: '#3b82f6',
+                            '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.1)', transform: 'translateY(-1px)' },
                             '&.Mui-disabled': { bgcolor: 'transparent', color: '#cbd5e1' },
                             borderRadius: '10px',
                             width: 38,

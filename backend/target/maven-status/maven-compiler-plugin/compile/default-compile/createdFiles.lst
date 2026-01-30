@@ -33,6 +33,7 @@ com\editor\backend\service\EncryptionService.class
 com\editor\backend\dto\StabilityStats$FeatureStability.class
 com\editor\backend\dto\AuthRequest.class
 com\editor\backend\model\ScenarioConfiguration.class
+com\editor\backend\service\GitLockManager.class
 com\editor\backend\dto\PagedStabilityResponse.class
 com\editor\backend\service\FileService.class
 com\editor\backend\dto\AnalyticsDTO$GherkinItem$GherkinItemBuilder.class

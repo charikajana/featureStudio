@@ -221,9 +221,9 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                                 <Box sx={{
                                     width: 48, height: 48,
-                                    bgcolor: 'rgba(99, 102, 241, 0.1)',
+                                    bgcolor: 'rgba(59, 130, 246, 0.1)',
                                     borderRadius: '16px',
-                                    color: '#6366f1',
+                                    color: '#3b82f6',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center'
@@ -273,9 +273,9 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                         borderRadius: '12px',
                                         py: 1.5,
                                         fontWeight: 800,
-                                        bgcolor: '#6366f1',
-                                        boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)',
-                                        '&:hover': { bgcolor: '#4f46e5', boxShadow: '0 20px 25px -5px rgba(99, 102, 241, 0.4)' }
+                                        bgcolor: '#3b82f6',
+                                        boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)',
+                                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.4)' }
                                     }}
                                 >
                                     {loading ? <CircularProgress size={24} color="inherit" /> : 'Clone Repository'}
@@ -314,14 +314,14 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                         sx={{
                                             borderRadius: 4,
                                             border: '1px solid',
-                                            borderColor: currentRepoUrl === repo.repositoryUrl ? '#6366f1' : '#e2e8f0',
+                                            borderColor: currentRepoUrl === repo.repositoryUrl ? '#3b82f6' : '#e2e8f0',
                                             bgcolor: 'white',
                                             overflow: 'visible',
                                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                             '&:hover': {
                                                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)',
                                                 transform: 'translateY(-2px)',
-                                                borderColor: currentRepoUrl === repo.repositoryUrl ? '#6366f1' : '#cbd5e1'
+                                                borderColor: currentRepoUrl === repo.repositoryUrl ? '#3b82f6' : '#cbd5e1'
                                             }
                                         }}
                                     >
@@ -335,7 +335,7 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                         border: '1px solid',
                                                         borderColor: repo.repositoryUrl.includes('github') ? '#e2e8f0' : '#dbeafe'
                                                     }}>
-                                                        {repo.repositoryUrl.includes('github') ? <GitHubIcon sx={{ fontSize: 24, color: '#0f172a' }} /> : <StorageIcon sx={{ fontSize: 24, color: '#6366f1' }} />}
+                                                        {repo.repositoryUrl.includes('github') ? <GitHubIcon sx={{ fontSize: 24, color: '#0f172a' }} /> : <StorageIcon sx={{ fontSize: 24, color: '#3b82f6' }} />}
                                                     </Box>
                                                     <Box sx={{ minWidth: 0, flex: 1 }}>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.2 }}>
@@ -350,7 +350,7 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                                         fontWeight: 900,
                                                                         height: 20,
                                                                         fontSize: '0.6rem',
-                                                                        bgcolor: '#6366f1',
+                                                                        bgcolor: '#3b82f6',
                                                                         color: 'white',
                                                                         flexShrink: 0,
                                                                         '& .MuiChip-label': { px: 1, lineHeight: 1 }
@@ -446,12 +446,12 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                     size="small"
                                                     onClick={() => handleOpenBranchDialog(repo.repositoryUrl)}
                                                     sx={{
-                                                        color: '#6366f1',
+                                                        color: '#3b82f6',
                                                         fontWeight: 700,
                                                         textTransform: 'none',
                                                         fontSize: '0.8rem',
                                                         borderRadius: 2,
-                                                        '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.05)' }
+                                                        '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.05)' }
                                                     }}
                                                 >
                                                     Create New Branch
@@ -466,9 +466,9 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                                                         borderRadius: '8px',
                                                         textTransform: 'none',
                                                         fontWeight: 800,
-                                                        bgcolor: '#6366f1',
+                                                        bgcolor: '#3b82f6',
                                                         boxShadow: 'none',
-                                                        '&:hover': { bgcolor: '#4f46e5', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)' }
+                                                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)' }
                                                     }}
                                                 >
                                                     {currentRepoUrl === repo.repositoryUrl ? 'Workspace Active' : 'Open'}
@@ -547,7 +547,7 @@ export const ProjectSetupView: FC<ProjectSetupViewProps> = ({
                         variant="contained"
                         onClick={handleCreateBranch}
                         disabled={!newBranchName.trim() || creatingBranch}
-                        sx={{ bgcolor: '#6366f1', fontWeight: 700, px: 3 }}
+                        sx={{ bgcolor: '#3b82f6', fontWeight: 700, px: 3 }}
                     >
                         {creatingBranch ? <CircularProgress size={20} color="inherit" /> : 'Create'}
                     </Button>

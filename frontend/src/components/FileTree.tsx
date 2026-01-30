@@ -189,7 +189,7 @@ export const FileTree: FC<FileTreeProps> = ({ nodes, onSelect, onSync, onNewFile
             <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: '#e2e8f0', bgcolor: '#f1f5f9' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <div style={{ width: 3, height: 16, backgroundColor: '#6366f1', borderRadius: 4 }} />
+                        <div style={{ width: 3, height: 16, backgroundColor: '#3b82f6', borderRadius: 4 }} />
                         <Typography variant="subtitle2" className="brand-font" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.9rem', letterSpacing: '-0.3px' }}>
                             PROJECT EXPLORER
                         </Typography>
@@ -211,7 +211,7 @@ export const FileTree: FC<FileTreeProps> = ({ nodes, onSelect, onSync, onNewFile
                                 '&:hover': { bgcolor: '#f8fafc' }
                             }}
                         >
-                            <SyncIcon sx={{ fontSize: 16, color: '#6366f1' }} />
+                            <SyncIcon sx={{ fontSize: 16, color: '#3b82f6' }} />
                         </IconButton>
                     )}
                     <IconButton
@@ -224,7 +224,7 @@ export const FileTree: FC<FileTreeProps> = ({ nodes, onSelect, onSync, onNewFile
                             '&:hover': { bgcolor: '#f8fafc' }
                         }}
                     >
-                        <Add sx={{ fontSize: 16, color: '#6366f1' }} />
+                        <Add sx={{ fontSize: 16, color: '#3b82f6' }} />
                     </IconButton>
                 </Box>
             </Box>

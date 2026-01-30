@@ -115,17 +115,17 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 0.8,
-                                bgcolor: 'rgba(99, 102, 241, 0.05)',
+                                bgcolor: 'rgba(59, 130, 246, 0.05)',
                                 px: 1.2,
                                 py: 0.4,
                                 borderRadius: '20px',
-                                border: '1px solid rgba(99, 102, 241, 0.1)'
+                                border: '1px solid rgba(59, 130, 246, 0.1)'
                             }}>
                                 <Box sx={{
                                     width: 6,
                                     height: 6,
                                     borderRadius: '50%',
-                                    bgcolor: syncing ? '#6366f1' : '#22c55e',
+                                    bgcolor: syncing ? '#3b82f6' : '#22c55e',
                                     animation: syncing ? 'pulse 1.5s infinite' : 'none',
                                     '@keyframes pulse': {
                                         '0%': { opacity: 1, transform: 'scale(1)' },
@@ -133,7 +133,7 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
                                         '100%': { opacity: 1, transform: 'scale(1)' }
                                     }
                                 }} />
-                                <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 700, fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
+                                <Typography variant="caption" sx={{ color: '#3b82f6', fontWeight: 700, fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
                                     {syncing ? 'SYNCING...' : `AUTO-SYNCED: ${lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                 </Typography>
                                 <Tooltip title="Direct Sync Now">
@@ -144,7 +144,7 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
                                         sx={{
                                             p: 0,
                                             ml: 0.5,
-                                            color: '#6366f1',
+                                            color: '#3b82f6',
                                             '&:hover': { bgcolor: 'transparent', transform: 'rotate(180deg)' },
                                             transition: 'transform 0.4s'
                                         }}
@@ -248,7 +248,7 @@ export const StabilityExplorerView: FC<StabilityExplorerViewProps> = ({ repoUrl,
                             {loading ? (
                                 <TableRow>
                                     <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                                        <CircularProgress size={40} thickness={5} sx={{ color: '#6366f1' }} />
+                                        <CircularProgress size={40} thickness={5} sx={{ color: '#3b82f6' }} />
                                         <Typography sx={{ mt: 2, color: '#64748b', fontWeight: 600 }}>Analyzing telemetry data...</Typography>
                                     </TableCell>
                                 </TableRow>

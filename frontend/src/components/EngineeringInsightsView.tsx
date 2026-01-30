@@ -133,12 +133,12 @@ export const EngineeringInsightsView: React.FC<StatisticalInsightsViewProps> = (
                                         width: 40,
                                         height: 40,
                                         borderRadius: '12px',
-                                        bgcolor: 'rgba(99, 102, 241, 0.08)',
-                                        color: '#6366f1',
+                                        bgcolor: 'rgba(59, 130, 246, 0.08)',
+                                        color: '#3b82f6',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        border: '1px solid rgba(99, 102, 241, 0.1)'
+                                        border: '1px solid rgba(59, 130, 246, 0.1)'
                                     }}>
                                         <SpeedIcon sx={{ fontSize: 22 }} />
                                     </Box>

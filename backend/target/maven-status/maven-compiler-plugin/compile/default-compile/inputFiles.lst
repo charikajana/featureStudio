@@ -18,6 +18,7 @@ C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backen
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\GitService.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\SecurityConfig.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\dto\PushRequest.java
+C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\GitLockManager.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\controller\AuthController.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\repository\GitRepositoryRepository.java
 C:\Chari_Local\AzureDevOps\featureStudio\backend\src\main\java\com\editor\backend\service\WorkspaceService.java

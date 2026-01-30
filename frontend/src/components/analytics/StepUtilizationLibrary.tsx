@@ -93,7 +93,7 @@ export const StepUtilizationLibrary: React.FC<StepUtilizationLibraryProps> = ({ 
                                 <ArrowBackIcon />
                             </IconButton>
                         </Tooltip>
-                        <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                        <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
                             <FormatListBulletedIcon />
                         </Box>
                         <Box>
@@ -122,7 +122,7 @@ export const StepUtilizationLibrary: React.FC<StepUtilizationLibraryProps> = ({ 
                                     bgcolor: '#f1f5f9',
                                     '& fieldset': { borderColor: 'transparent' },
                                     '&:hover fieldset': { borderColor: '#cbd5e1' },
-                                    '&.Mui-focused fieldset': { borderColor: '#6366f1' }
+                                    '&.Mui-focused fieldset': { borderColor: '#3b82f6' }
                                 }
                             }}
                             InputProps={{
@@ -165,8 +165,8 @@ export const StepUtilizationLibrary: React.FC<StepUtilizationLibraryProps> = ({ 
                                             <TableCell sx={{ py: 1 }}>
                                                 <Box sx={{
                                                     width: 24, height: 24, borderRadius: '6px',
-                                                    bgcolor: globalIndex < 3 ? 'rgba(99, 102, 241, 0.1)' : '#f1f5f9',
-                                                    color: globalIndex < 3 ? '#6366f1' : '#64748b',
+                                                    bgcolor: globalIndex < 3 ? 'rgba(59, 130, 246, 0.1)' : '#f1f5f9',
+                                                    color: globalIndex < 3 ? '#3b82f6' : '#64748b',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                     fontWeight: 900, fontSize: '0.65rem'
                                                 }}>

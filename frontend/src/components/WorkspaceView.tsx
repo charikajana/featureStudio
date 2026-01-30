@@ -34,7 +34,7 @@ export const WorkspaceView: FC<WorkspaceViewProps> = ({ allRepos, onSettingsOpen
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         bgcolor: 'transparent',
                         '&:hover': {
-                            borderColor: '#6366f1',
+                            borderColor: '#3b82f6',
                             bgcolor: 'white',
                             transform: 'translateY(-4px)',
                             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)'
@@ -45,8 +45,8 @@ export const WorkspaceView: FC<WorkspaceViewProps> = ({ allRepos, onSettingsOpen
                         width: 60,
                         height: 60,
                         borderRadius: '18px',
-                        bgcolor: 'rgba(99, 102, 241, 0.1)',
-                        color: '#6366f1',
+                        bgcolor: 'rgba(59, 130, 246, 0.1)',
+                        color: '#3b82f6',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -84,7 +84,7 @@ export const WorkspaceView: FC<WorkspaceViewProps> = ({ allRepos, onSettingsOpen
                                 position: 'absolute',
                                 top: 0, left: 0, right: 0,
                                 height: '4px',
-                                bgcolor: repo.repositoryUrl.includes('github.com') ? '#6366f1' : '#10b981',
+                                bgcolor: repo.repositoryUrl.includes('github.com') ? '#3b82f6' : '#10b981',
                                 opacity: 0.8
                             }
                         }}
@@ -130,7 +130,7 @@ export const WorkspaceView: FC<WorkspaceViewProps> = ({ allRepos, onSettingsOpen
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                bgcolor: '#6366f1'
+                                bgcolor: '#3b82f6'
                             }}
                         >
                             Open Project

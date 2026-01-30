@@ -61,7 +61,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
                         bottom: 0,
                         width: '4px',
                         cursor: 'col-resize',
-                        '&:hover': { bgcolor: '#6366f1' },
+                        '&:hover': { bgcolor: '#3b82f6' },
                         zIndex: 10
                     }}
                 />
@@ -107,7 +107,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
                 {/* Editor Status Bar */}
                 <Box sx={{
                     height: 24,
-                    bgcolor: '#6366f1',
+                    bgcolor: '#3b82f6',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',

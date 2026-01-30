@@ -83,7 +83,7 @@ export const PerformanceHotspotsDialog: React.FC<PerformanceHotspotsDialogProps>
                                 <ArrowBackIcon />
                             </IconButton>
                         </Tooltip>
-                        <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                        <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
                             <BoltIcon />
                         </Box>
                         <Box>

@@ -103,7 +103,7 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress thickness={5} size={60} sx={{ color: '#6366f1' }} />
+                <CircularProgress thickness={5} size={60} sx={{ color: '#3b82f6' }} />
             </Box>
         );
     }
@@ -141,17 +141,17 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 0.8,
-                                bgcolor: 'rgba(99, 102, 241, 0.05)',
+                                bgcolor: 'rgba(59, 130, 246, 0.05)',
                                 px: 1.2,
                                 py: 0.4,
                                 borderRadius: '20px',
-                                border: '1px solid rgba(99, 102, 241, 0.1)'
+                                border: '1px solid rgba(59, 130, 246, 0.1)'
                             }}>
                                 <Box sx={{
                                     width: 6,
                                     height: 6,
                                     borderRadius: '50%',
-                                    bgcolor: syncing ? '#6366f1' : '#22c55e',
+                                    bgcolor: syncing ? '#3b82f6' : '#22c55e',
                                     animation: syncing ? 'pulse 1.5s infinite' : 'none',
                                     '@keyframes pulse': {
                                         '0%': { opacity: 1, transform: 'scale(1)' },
@@ -159,7 +159,7 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                         '100%': { opacity: 1, transform: 'scale(1)' }
                                     }
                                 }} />
-                                <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 700, fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
+                                <Typography variant="caption" sx={{ color: '#3b82f6', fontWeight: 700, fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
                                     {syncing ? 'SYNCING...' : `AUTO-SYNCED: ${lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                 </Typography>
                                 <Tooltip title="Direct Sync Now">
@@ -170,7 +170,7 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                                         sx={{
                                             p: 0,
                                             ml: 0.5,
-                                            color: '#6366f1',
+                                            color: '#3b82f6',
                                             '&:hover': { bgcolor: 'transparent', transform: 'rotate(180deg)' },
                                             transition: 'transform 0.4s'
                                         }}
@@ -283,7 +283,7 @@ export const AdvancedAnalyticsView: React.FC<AdvancedAnalyticsViewProps> = ({
                         </Box>
 
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, p: 2, borderRadius: '16px', bgcolor: '#f8fafc' }}>
-                            <MetricCard icon={DescriptionIcon} label="Features" value={data.totalFeatures} color="#6366f1" />
+                            <MetricCard icon={DescriptionIcon} label="Features" value={data.totalFeatures} color="#3b82f6" />
                             <MetricCard icon={FormatListBulletedIcon} label="Scenarios" value={data.totalScenarios} color="#3b82f6" />
                             <MetricCard icon={QuizIcon} label="Outlines" value={data.totalScenarioOutlines} color="#8b5cf6" />
                             <MetricCard icon={LaunchIcon} label="Total Steps" value={data.totalSteps} color="#22c55e" />

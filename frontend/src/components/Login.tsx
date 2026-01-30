@@ -86,7 +86,7 @@ export const Login: FC<LoginProps> = ({ onLoginSuccess }) => {
                 <Box sx={{
                     width: 32,
                     height: 32,
-                    bgcolor: '#6366f1', // Changed to match indigo theme
+                    bgcolor: '#3b82f6', // Changed to match indigo theme
                     borderRadius: 1,
                     display: 'flex',
                     alignItems: 'center',

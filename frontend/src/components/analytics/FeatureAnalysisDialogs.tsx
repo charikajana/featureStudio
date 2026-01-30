@@ -162,7 +162,7 @@ export const FeatureFilesDialog: React.FC<any> = (props) => (
         title="Project Feature Files"
         subtitle="Feature-level specifications"
         icon={DescriptionIcon}
-        iconColor="#6366f1"
+        iconColor="#3b82f6"
         searchPlaceholder="Search feature files..."
     />
 );

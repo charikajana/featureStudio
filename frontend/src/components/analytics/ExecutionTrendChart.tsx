@@ -69,7 +69,7 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                             fontWeight: 900,
                             textTransform: 'none',
                             bgcolor: showPassRate ? 'white' : 'transparent',
-                            color: showPassRate ? '#6366f1' : '#64748b',
+                            color: showPassRate ? '#3b82f6' : '#64748b',
                             boxShadow: showPassRate ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
                             '&:hover': { bgcolor: showPassRate ? 'white' : 'rgba(0,0,0,0.04)' }
                         }}
@@ -148,7 +148,7 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                                         >
                                             <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="transparent" />
                                             {hoveredRunIndex === idx && (
-                                                <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="rgba(99, 102, 241, 0.05)" rx="16" />
+                                                <rect x={x - 10} y="40" width={barWidth + 20} height="330" fill="rgba(59, 130, 246, 0.05)" rx="16" />
                                             )}
                                             <rect x={x} y={350 - hPassed} width={barWidth} height={hPassed} fill="url(#passedPill)" rx={hFailed + hSkipped === 0 ? 8 : 4} />
                                             {hFailed > 0 && <rect x={x} y={350 - hPassed - hFailed} width={barWidth} height={hFailed} fill="url(#failedPill)" rx={hSkipped === 0 ? 8 : 4} stroke="white" strokeWidth="1" />}
@@ -172,7 +172,7 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                                         <path
                                             d={`M ${trendPoints[0].x},${trendPoints[0].y} ` + trendPoints.slice(1).map(p => `L ${p.x},${p.y}`).join(' ')}
                                             fill="none"
-                                            stroke="#6366f1"
+                                            stroke="#3b82f6"
                                             strokeWidth="5"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
@@ -185,7 +185,7 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                                                 cy={p.y}
                                                 r={hoveredRunIndex === i ? 9 : 6}
                                                 fill="white"
-                                                stroke="#6366f1"
+                                                stroke="#3b82f6"
                                                 strokeWidth="4"
                                                 style={{ transition: 'all 0.25s ease' }}
                                             />
@@ -224,7 +224,7 @@ export const ExecutionTrendChart: React.FC<ExecutionTrendChartProps> = ({ recent
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Skipped</Typography><Typography sx={{ fontSize: '10px', fontWeight: 900 }}>{run.skippedCount || 0}</Typography></Box>
                                                     <Box sx={{ mt: 1, pt: 0.5, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between' }}>
                                                         <Typography sx={{ fontSize: '10px', fontWeight: 700 }}>Pass Rate</Typography>
-                                                        <Typography sx={{ fontSize: '10px', fontWeight: 900, color: '#6366f1' }}>{passRate}%</Typography>
+                                                        <Typography sx={{ fontSize: '10px', fontWeight: 900, color: '#3b82f6' }}>{passRate}%</Typography>
                                                     </Box>
                                                 </Box>
                                             </Paper>

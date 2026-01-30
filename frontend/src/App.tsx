@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import {
   Box,
   CssBaseline,
-  CircularProgress,
   Snackbar,
-  Alert,
-  Typography
+  Alert
 } from '@mui/material';
+import { DynamicBackground } from './components/DynamicBackground';
+import { PremiumLoading } from './components/PremiumLoading';
 import { AppHeader } from './components/AppHeader';
 import { Sidebar } from './components/Sidebar';
 import { TestStatsView } from './components/TestStatsView';
@@ -85,6 +85,7 @@ function App() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', bgcolor: '#f8f9fa' }}>
+      <DynamicBackground />
       <CssBaseline />
       <AppHeader
         onSave={handleSave}
@@ -223,19 +224,7 @@ function App() {
         })()}
       </Box>
 
-      {loading && (
-        <Box sx={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          bgcolor: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(4px)',
-          zIndex: 9999, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 2
-        }}>
-          <CircularProgress thickness={5} size={48} sx={{ color: '#6366f1' }} />
-          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4338ca', letterSpacing: '1px' }}>
-            PROCESSING...
-          </Typography>
-        </Box>
-      )}
+      {loading && <PremiumLoading />}
 
       <AppModals
         modalOpen={modalOpen}

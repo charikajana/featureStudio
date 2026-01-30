@@ -55,7 +55,7 @@ export const ThresholdDialog: React.FC<ThresholdDialogProps> = ({
                     variant="contained"
                     onClick={onSave}
                     disabled={saving}
-                    sx={{ bgcolor: '#6366f1', fontWeight: 800 }}
+                    sx={{ bgcolor: '#3b82f6', fontWeight: 800 }}
                 >
                     {saving ? <CircularProgress size={20} color="inherit" /> : 'Save Duration'}
                 </Button>

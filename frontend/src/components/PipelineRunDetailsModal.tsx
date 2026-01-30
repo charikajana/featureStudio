@@ -142,7 +142,7 @@ export const PipelineRunDetailsModal: FC<PipelineRunDetailsModalProps> = ({
             <DialogContent sx={{ mt: 3, px: 3, pb: 2 }}>
                 {loading && !details && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, gap: 2 }}>
-                        <CircularProgress size={40} thickness={5} sx={{ color: '#6366f1' }} />
+                        <CircularProgress size={40} thickness={5} sx={{ color: '#3b82f6' }} />
                         <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Fetching build artifacts...</Typography>
                     </Box>
                 )}

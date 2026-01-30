@@ -132,11 +132,11 @@ export const registerGherkinLanguage = (monacoInstance: typeof monaco) => {
             'editor.background': '#ffffff',
             'editor.lineHighlightBackground': '#f8fafc',
             'editorLineNumber.foreground': '#cbd5e1',
-            'editorLineNumber.activeForeground': '#6366f1',
+            'editorLineNumber.activeForeground': '#3b82f6',
             'editorIndentGuide.background': '#f1f5f9',
             'editorIndentGuide.activeBackground': '#cbd5e1',
             'editor.selectionBackground': '#ddd6fe',
-            'editorCursor.foreground': '#6366f1',
+            'editorCursor.foreground': '#3b82f6',
         }
     });
 

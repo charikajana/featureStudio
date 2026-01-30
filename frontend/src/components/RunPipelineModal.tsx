@@ -90,12 +90,12 @@ export const RunPipelineModal: FC<RunPipelineModalProps> = ({
                 <Box sx={{
                     width: 44, h: 44,
                     borderRadius: '12px',
-                    bgcolor: '#6366f1',
+                    bgcolor: '#3b82f6',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
                 }}>
                     <RocketLaunchIcon sx={{ fontSize: 24 }} />
                 </Box>
@@ -134,7 +134,7 @@ export const RunPipelineModal: FC<RunPipelineModalProps> = ({
                             <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>
                                 Runtime Parameters
                             </Typography>
-                            <Chip label={`${Object.keys(parameters).length} Configured`} size="small" sx={{ fontWeight: 800, height: 20, fontSize: '0.6rem', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }} />
+                            <Chip label={`${Object.keys(parameters).length} Configured`} size="small" sx={{ fontWeight: 800, height: 20, fontSize: '0.6rem', bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} />
                         </Box>
 
                         <Paper elevation={0} sx={{
@@ -220,9 +220,9 @@ export const RunPipelineModal: FC<RunPipelineModalProps> = ({
                         px: 4,
                         py: 1,
                         fontWeight: 900,
-                        bgcolor: '#6366f1',
-                        boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)',
-                        '&:hover': { bgcolor: '#4f46e5', boxShadow: '0 20px 25px -5px rgba(99, 102, 241, 0.4)' }
+                        bgcolor: '#3b82f6',
+                        boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)',
+                        '&:hover': { bgcolor: '#2563eb', boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.4)' }
                     }}
                     startIcon={!loading && <RocketLaunchIcon fontSize="small" />}
                 >

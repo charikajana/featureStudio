@@ -66,7 +66,7 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
     if (loading) {
         return (
             <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CircularProgress thickness={5} size={60} sx={{ color: '#6366f1' }} />
+                <CircularProgress thickness={5} size={60} sx={{ color: '#3b82f6' }} />
             </Box>
         );
     }
@@ -95,12 +95,12 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                         width: 56,
                         height: 56,
                         borderRadius: '18px',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
                         color: 'white',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)'
+                        boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)'
                     }}>
                         <FormatListBulletedIcon sx={{ fontSize: 32 }} />
                     </Box>
@@ -129,7 +129,7 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                                 bgcolor: 'white',
                                 '& fieldset': { borderColor: '#e2e8f0' },
                                 '&:hover fieldset': { borderColor: '#cbd5e1' },
-                                '&.Mui-focused fieldset': { borderColor: '#6366f1' }
+                                '&.Mui-focused fieldset': { borderColor: '#3b82f6' }
                             }
                         }}
                         InputProps={{
@@ -175,12 +175,12 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                                 width: 44,
                                 height: 44,
                                 borderRadius: '12px',
-                                bgcolor: 'rgba(99, 102, 241, 0.08)',
-                                color: '#6366f1',
+                                bgcolor: 'rgba(59, 130, 246, 0.08)',
+                                color: '#3b82f6',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                border: '1px solid rgba(99, 102, 241, 0.1)',
+                                border: '1px solid rgba(59, 130, 246, 0.1)',
                                 cursor: 'pointer'
                             }}>
                                 <LayersIcon sx={{ fontSize: 24 }} />
@@ -296,11 +296,11 @@ export const StepIntelligenceView: React.FC<StepIntelligenceViewProps> = ({ repo
                                         <TableCell sx={{ py: 2 }}>
                                             <Box sx={{
                                                 width: 32, height: 32, borderRadius: '10px',
-                                                bgcolor: isVitalFew ? 'rgba(99, 102, 241, 0.1)' : '#f1f5f9',
-                                                color: isVitalFew ? '#6366f1' : '#64748b',
+                                                bgcolor: isVitalFew ? 'rgba(59, 130, 246, 0.1)' : '#f1f5f9',
+                                                color: isVitalFew ? '#3b82f6' : '#64748b',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 fontWeight: 900, fontSize: '0.8rem',
-                                                border: isVitalFew ? '1px solid rgba(99, 102, 241, 0.2)' : 'none'
+                                                border: isVitalFew ? '1px solid rgba(59, 130, 246, 0.2)' : 'none'
                                             }}>
                                                 {globalIndex + 1}
                                             </Box>
